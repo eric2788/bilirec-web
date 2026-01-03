@@ -1,44 +1,34 @@
 export interface LoginRequest {
-  username: string
-  password: string
-}
-
-export interface LoginResponse {
   token: string
 }
 
 export interface RecordTask {
-  room_id: number
-  status: 'recording' | 'idle' | 'error'
-  file_size?: number
-  duration?: number
-  start_time?: string
-  error_message?: string
-  room_info?: {
+  roomId: number
+  status: 'recording' | 'idle' | 'error' | 'waiting'
+  fileName?: string
+  fileSize?: number
+  recordedTime?: number
+  startTime?: string
+  error?: string
+  roomInfo?: {
     title: string
     uname: string
     face: string
-    online: number
+    live_status: number
+    online?: number
   }
 }
 
 export interface RecordFile {
-  id: string
-  room_id: number
-  filename: string
-  file_size: number
-  duration: number
-  format: 'flv' | 'mp4'
-  created_at: string
-  room_info?: {
-    title: string
-    uname: string
-    face: string
-  }
+  path: string
+  name: string
+  size: number
+  modTime: string
+  isDir: boolean
 }
 
 export interface StartRecordRequest {
-  room_id: number
+  roomId: number
 }
 
 export interface ApiError {

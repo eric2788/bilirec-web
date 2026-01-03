@@ -6,14 +6,15 @@ import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Info } from '@phosphor-icons/react'
 
 interface LoginViewProps {
   onLoginSuccess: () => void
 }
 
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
+  const [token, setToken] = useState('')
   const [serverUrl, setServerUrl] = useKV('server-url', 'http://localhost:8080')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -27,8 +28,8 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       return
     }
 
-    if (!username.trim() || !password.trim()) {
-      toast.error('請輸入用戶名和密碼')
+    if (!token.trim()) {
+      toast.error('請輸入 API Token')
       return
     }
 
@@ -36,16 +37,20 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
 
     try {
       apiClient.setBaseURL(url)
-      const response = await apiClient.login({ username, password })
+      const isValid = await apiClient.verifyToken({ token })
       
-      await window.spark.kv.set('auth-token', response.token)
-      await window.spark.kv.set('server-url', url)
-      
-      toast.success('登入成功')
-      onLoginSuccess()
+      if (isValid) {
+        await window.spark.kv.set('auth-token', token)
+        await window.spark.kv.set('server-url', url)
+        
+        toast.success('連接成功')
+        onLoginSuccess()
+      } else {
+        toast.error('Token 驗證失敗，請檢查 Token 是否正確')
+      }
     } catch (error: any) {
       console.error('Login error:', error)
-      toast.error(error.response?.data?.message || '登入失敗，請檢查用戶名和密碼')
+      toast.error(error.response?.data?.message || '連接失敗，請檢查伺服器地址和 Token')
     } finally {
       setIsLoading(false)
     }
@@ -62,8 +67,15 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             </svg>
           </div>
           <h1 className="text-2xl font-bold">Bilibili 錄製管理</h1>
-          <p className="text-sm text-muted-foreground mt-2">登入以管理您的錄製任務</p>
+          <p className="text-sm text-muted-foreground mt-2">連接到您的錄製伺服器</p>
         </div>
+
+        <Alert className="mb-4">
+          <Info className="h-4 w-4" />
+          <AlertDescription className="text-xs">
+            請在伺服器設定檔中配置 API Token，然後在此輸入相同的 Token
+          </AlertDescription>
+        </Alert>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
@@ -79,28 +91,15 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username">用戶名</Label>
+            <Label htmlFor="token">API Token</Label>
             <Input
-              id="username"
-              type="text"
-              placeholder="輸入用戶名"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={isLoading}
-              autoComplete="username"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">密碼</Label>
-            <Input
-              id="password"
+              id="token"
               type="password"
-              placeholder="輸入密碼"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              placeholder="輸入 API Token"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
               disabled={isLoading}
-              autoComplete="current-password"
+              autoComplete="off"
             />
           </div>
 
@@ -109,7 +108,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             className="w-full" 
             disabled={isLoading}
           >
-            {isLoading ? '登入中...' : '登入'}
+            {isLoading ? '連接中...' : '連接'}
           </Button>
         </form>
       </Card>

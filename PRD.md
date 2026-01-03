@@ -13,11 +13,11 @@
 ## Essential Features
 
 ### 用戶認證
-- **Functionality**: 使用用戶名和密碼登入系統
-- **Purpose**: 保護後端 API 訪問權限，確保只有授權用戶可以管理錄製
-- **Trigger**: 應用啟動時檢查認證狀態，未登入則顯示登入表單
-- **Progression**: 顯示登入表單 → 輸入用戶名密碼 → 提交驗證 → 存儲令牌 → 進入主界面
-- **Success criteria**: 成功登入後可訪問所有功能，令牌持久化存儲，自動刷新
+- **Functionality**: 使用 API Token 連接到後端伺服器
+- **Purpose**: 保護後端 API 訪問權限，確保只有持有 Token 的用戶可以管理錄製
+- **Trigger**: 應用啟動時檢查認證狀態，未連接則顯示連接表單
+- **Progression**: 顯示連接表單 → 輸入伺服器地址和 API Token → 驗證連接 → 存儲 Token → 進入主界面
+- **Success criteria**: 成功連接後可訪問所有功能，Token 持久化存儲，自動重連
 
 ### 錄製管理（網格視圖）
 - **Functionality**: 通過房間 ID 啟動/停止錄製，查看錄製狀態和統計數據
@@ -27,11 +27,11 @@
 - **Success criteria**: 狀態實時更新，操作響應及時，錯誤提示清晰，支持多任務管理
 
 ### 文件瀏覽（列表視圖）
-- **Functionality**: 瀏覽已錄製的文件，支持 FLV/MP4 格式下載
+- **Functionality**: 瀏覽已錄製的文件目錄結構，支持下載 FLV/MP4 檔案
 - **Purpose**: 讓用戶能查看和獲取錄製成果
 - **Trigger**: 切換到文件標籤頁
-- **Progression**: 顯示文件列表（按時間排序） → 顯示文件信息（主播、標題、大小、格式） → 點擊下載按鈕 → 選擇格式 → 下載文件
-- **Success criteria**: 列表加載流暢，文件信息完整，下載功能可靠
+- **Progression**: 顯示檔案列表 → 點擊資料夾進入 → 查看文件信息（檔名、大小、修改時間） → 點擊下載按鈕 → 下載文件
+- **Success criteria**: 列表加載流暢，文件信息完整，資料夾導航順暢，下載功能可靠
 
 ### 底部導航切換
 - **Functionality**: 在錄製管理和文件瀏覽之間快速切換

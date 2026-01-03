@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios'
-import type { LoginRequest, LoginResponse, RecordTask, RecordFile, StartRecordRequest } from './types'
+import type { LoginRequest, RecordTask, RecordFile, StartRecordRequest } from './types'
 
 class ApiClient {
   private client: AxiosInstance
@@ -16,7 +16,7 @@ class ApiClient {
 
     this.client.interceptors.request.use((config) => {
       if (this.token) {
-        config.headers.Authorization = `Bearer ${this.token}`
+        config.headers['X-API-Token'] = this.token
       }
       return config
     })
@@ -24,7 +24,7 @@ class ApiClient {
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
           this.clearAuth()
           window.location.reload()
         }
@@ -54,14 +54,19 @@ class ApiClient {
     this.token = null
   }
 
-  async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await this.client.post<LoginResponse>('/api/auth/login', data)
-    this.setToken(response.data.token)
-    return response.data
+  async verifyToken(data: LoginRequest): Promise<boolean> {
+    try {
+      this.setToken(data.token)
+      await this.client.get('/api/records')
+      return true
+    } catch (error) {
+      this.clearAuth()
+      return false
+    }
   }
 
-  async getTasks(): Promise<RecordTask[]> {
-    const response = await this.client.get<RecordTask[]>('/api/records/tasks')
+  async getRecords(): Promise<RecordTask[]> {
+    const response = await this.client.get<RecordTask[]>('/api/records')
     return response.data
   }
 
@@ -70,16 +75,16 @@ class ApiClient {
   }
 
   async stopRecord(roomId: number): Promise<void> {
-    await this.client.post(`/api/records/stop/${roomId}`)
+    await this.client.post(`/api/records/${roomId}/stop`)
   }
 
   async getFiles(): Promise<RecordFile[]> {
-    const response = await this.client.get<RecordFile[]>('/api/records/files')
+    const response = await this.client.get<RecordFile[]>('/api/files')
     return response.data
   }
 
-  getDownloadUrl(fileId: string, format: 'flv' | 'mp4'): string {
-    return `${this.baseURL}/api/records/download/${fileId}?format=${format}`
+  getDownloadUrl(filePath: string): string {
+    return `${this.baseURL}/api/files/download?path=${encodeURIComponent(filePath)}`
   }
 }
 

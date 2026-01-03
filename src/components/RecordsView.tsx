@@ -23,7 +23,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
 
   const fetchTasks = async () => {
     try {
-      const data = await apiClient.getTasks()
+      const data = await apiClient.getRecords()
       setTasks(data)
     } catch (error: any) {
       console.error('Failed to fetch tasks:', error)
@@ -49,7 +49,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
 
     setIsAdding(true)
     try {
-      await apiClient.startRecord({ room_id: id })
+      await apiClient.startRecord({ roomId: id })
       toast.success('已開始錄製')
       setIsDialogOpen(false)
       setRoomId('')
@@ -65,7 +65,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
 
   const handleStart = async (roomId: number) => {
     try {
-      await apiClient.startRecord({ room_id: roomId })
+      await apiClient.startRecord({ roomId })
       toast.success('已開始錄製')
       fetchTasks()
       onRefresh?.()
@@ -147,7 +147,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
           <div className="grid gap-4 sm:grid-cols-2">
             {tasks.map((task) => (
               <RecordCard
-                key={task.room_id}
+                key={task.roomId}
                 task={task}
                 onStart={handleStart}
                 onStop={handleStop}

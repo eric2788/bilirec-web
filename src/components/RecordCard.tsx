@@ -20,9 +20,9 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
     setIsLoading(true)
     try {
       if (task.status === 'recording') {
-        await onStop(task.room_id)
+        await onStop(task.roomId)
       } else {
-        await onStart(task.room_id)
+        await onStart(task.roomId)
       }
     } finally {
       setIsLoading(false)
@@ -57,9 +57,9 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
       <div className="flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 flex-1 min-w-0">
-            {task.room_info?.face && (
+            {task.roomInfo?.face && (
               <Avatar className="w-12 h-12 shrink-0">
-                <AvatarImage src={task.room_info.face} alt={task.room_info.uname} />
+                <AvatarImage src={task.roomInfo.face} alt={task.roomInfo.uname} />
                 <AvatarFallback>
                   <User weight="fill" />
                 </AvatarFallback>
@@ -67,10 +67,10 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
             )}
             <div className="flex-1 min-w-0">
               <p className="font-semibold text-card-foreground truncate">
-                {task.room_info?.uname || `房間 ${task.room_id}`}
+                {task.roomInfo?.uname || `房間 ${task.roomId}`}
               </p>
               <p className="text-sm text-muted-foreground truncate">
-                {task.room_info?.title || '載入中...'}
+                {task.roomInfo?.title || '載入中...'}
               </p>
             </div>
           </div>
@@ -79,24 +79,24 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
 
         {task.status === 'recording' && (
           <div className="grid grid-cols-2 gap-2 text-sm">
-            {task.duration !== undefined && (
+            {task.recordedTime !== undefined && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Clock className="w-4 h-4 shrink-0" />
-                <span className="font-mono">{formatDuration(task.duration)}</span>
+                <span className="font-mono">{formatDuration(task.recordedTime)}</span>
               </div>
             )}
-            {task.file_size !== undefined && (
+            {task.fileSize !== undefined && (
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Database className="w-4 h-4 shrink-0" />
-                <span className="font-mono">{formatFileSize(task.file_size)}</span>
+                <span className="font-mono">{formatFileSize(task.fileSize)}</span>
               </div>
             )}
           </div>
         )}
 
-        {task.status === 'error' && task.error_message && (
+        {task.status === 'error' && task.error && (
           <p className="text-sm text-destructive">
-            {task.error_message}
+            {task.error}
           </p>
         )}
 
