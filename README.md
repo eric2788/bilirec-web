@@ -1,23 +1,62 @@
-# ✨ Welcome to Your Spark Template!
-You've just launched your brand-new Spark Template Codespace — everything’s fired up and ready for you to explore, build, and create with Spark!
+# Bilibili 錄製管理系統 (Bilirec Frontend)
 
-This template is your blank canvas. It comes with a minimal setup to help you get started quickly with Spark development.
+A Progressive Web App (PWA) for managing Bilibili live stream recordings through the [bilirec](https://github.com/eric2788/bilirec) backend.
 
-🚀 What's Inside?
-- A clean, minimal Spark environment
-- Pre-configured for local development
-- Ready to scale with your ideas
-  
-🧠 What Can You Do?
+## 🚀 Features
 
-Right now, this is just a starting point — the perfect place to begin building and testing your Spark applications.
+- 📱 **Mobile-First PWA**: Install on mobile devices for a native-like experience
+- 🎥 **Recording Management**: Start/stop recordings, view status and statistics
+- 📁 **File Browser**: Browse and download recorded files in FLV/MP4 format
+- 🔄 **Real-time Updates**: Auto-refresh recording status every 5 seconds
+- 🌐 **Multi-Server Support**: Connect to different bilirec server instances
+- 🔒 **JWT Authentication**: Secure login with token-based auth
 
-🧹 Just Exploring?
-No problem! If you were just checking things out and don’t need to keep this code:
+## 🛠️ Tech Stack
 
-- Simply delete your Spark.
-- Everything will be cleaned up — no traces left behind.
+- **Framework**: React 19 + TypeScript
+- **Build Tool**: Vite
+- **Package Manager**: pnpm
+- **UI Library**: shadcn/ui + Radix UI
+- **Styling**: Tailwind CSS
+- **HTTP Client**: Axios
+- **Animation**: Framer Motion
+- **Icons**: Phosphor Icons
 
-📄 License For Spark Template Resources 
+## 📦 Installation
 
-The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
+```bash
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Preview production build
+pnpm preview
+```
+
+## 🔧 Configuration
+
+1. Launch the app
+2. Enter your bilirec server URL (supports both HTTP and HTTPS)
+3. Login with your credentials
+4. Start managing your recordings!
+
+## 🌐 Backend
+
+This frontend requires the [bilirec](https://github.com/eric2788/bilirec) backend to be running.
+
+## 📱 PWA Installation
+
+The app can be installed on mobile devices:
+
+1. Open in mobile browser
+2. Tap "Add to Home Screen" (iOS) or "Install" (Android)
+3. Launch from your home screen like a native app
+
+## 📄 License
+
+MIT

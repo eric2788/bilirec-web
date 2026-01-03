@@ -1,0 +1,119 @@
+{
+  "name": "@github/spark",
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "build": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "prepack": "MODE=PACKAGE npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "exports": {
+    "./agent-plugin": {
+      "types": "./dist/agentPlugin.d.ts",
+      "import": "./dist/agentPlugin.js"
+    },
+    "./db": {
+      "types": "./dist/lib/db.d.ts",
+      "import": "./dist/db.js"
+    },
+    "./designer-styles.css": "./dist/designer-styles.css",
+    "./designerHost": {
+      "types": "./dist/designerHost.d.ts",
+      "import": "./dist/designerHost.js"
+    },
+    "./designerPlugin": {
+      "types": "./dist/designerPlugin.d.ts",
+      "import": "./dist/designerPlugin.js"
+    },
+    "./heartbeat": {
+      "types": "./dist/heartbeat/heartbeat.d.ts",
+      "import": "./dist/heartbeat.js"
+    },
+    "./heartbeatPlugin": {
+      "types": "./dist/heartbeat/heartbeatPlugin.d.ts",
+      "import": "./dist/heartbeatPlugin.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./initializeTelemetry": {
+      "types": "./dist/heartbeat/heartbeat.d.ts",
+      "import": "./dist/heartbeat.js"
+    },
+    "./llm": {
+      "types": "./dist/lib/llm.d.ts",
+      "import": "./dist/llm.js"
+    },
+    "./logToFileLogger": {
+      "types": "./dist/heartbeat/logToFileLogger.d.ts",
+      "import": "./dist/logToFileLogger.js"
+    },
+    "./package.json": "./package.json",
+    "./spark": {
+      "types": "./dist/lib/spark.d.ts",
+      "import": "./dist/spark.js"
+    },
+    "./spark-vite-plugin": {
+      "types": "./dist/sparkVitePlugin.d.ts",
+      "import": "./dist/sparkVitePlugin.js"
+    },
+    "./telemetryPlugin": {
+      "types": "./dist/heartbeat/heartbeatPlugin.d.ts",
+      "import": "./dist/heartbeatPlugin.js"
+    },
+    "./vitePhosphorIconProxyPlugin": {
+      "types": "./dist/vitePhosphorIconProxyPlugin.d.ts",
+      "import": "./dist/vitePhosphorIconProxyPlugin.js"
+    }
+  },
+  "prettier": {
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "all",
+    "printWidth": 120
+  },
+  "files": [
+    "LICENSE",
+    "dist",
+    "package.json"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.0",
+    "@rollup/plugin-replace": "^6.0.2",
+    "@rollup/plugin-terser": "^0.4.4",
+    "@rollup/plugin-typescript": "^12.1.2",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.0.1",
+    "@types/body-parser": "^1.19.6",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.9",
+    "@types/react": "^19.0.0",
+    "jsdom": "^25.0.1",
+    "rollup": "^4.35.0",
+    "rollup-plugin-delete": "^3.0.1",
+    "tslib": "^2.8.1",
+    "ulid": "^3.0.0",
+    "vitest": "^3.0.9",
+    "zod": "^3.24.2"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "vite": "^7.0.0 || ^6.4.1"
+  },
+  "author": "",
+  "license": "MIT",
+  "keywords": [],
+  "description": "",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "express": "^5.2.0",
+    "octokit": "^5.0.3"
+  }
+}
