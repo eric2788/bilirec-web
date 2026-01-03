@@ -16,7 +16,7 @@ class ApiClient {
 
     this.client.interceptors.request.use((config) => {
       if (this.token) {
-        config.headers['X-API-Token'] = this.token
+        config.headers['Authorization'] = `Bearer ${this.token}`
       }
       return config
     })
