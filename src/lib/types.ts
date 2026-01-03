@@ -1,5 +1,6 @@
 export interface LoginRequest {
-  token: string
+  user: string
+  pass: string
 }
 
 export interface RecordTask {

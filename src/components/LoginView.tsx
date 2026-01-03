@@ -14,7 +14,8 @@ interface LoginViewProps {
 }
 
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
-  const [token, setToken] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
   const [serverUrl, setServerUrl] = useKV('server-url', 'http://localhost:8080')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -28,8 +29,13 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       return
     }
 
-    if (!token.trim()) {
-      toast.error('請輸入 API Token')
+    if (!username.trim()) {
+      toast.error('請輸入用戶名')
+      return
+    }
+
+    if (!password.trim()) {
+      toast.error('請輸入密碼')
       return
     }
 
@@ -37,20 +43,20 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
 
     try {
       apiClient.setBaseURL(url)
-      const isValid = await apiClient.verifyToken({ token })
+      const result = await apiClient.login({ user: username, pass: password })
       
-      if (isValid) {
-        await window.spark.kv.set('auth-token', token)
+      if (result?.token) {
+        await window.spark.kv.set('auth-token', result.token)
         await window.spark.kv.set('server-url', url)
         
-        toast.success('連接成功')
+        toast.success('登入成功')
         onLoginSuccess()
       } else {
-        toast.error('Token 驗證失敗，請檢查 Token 是否正確')
+        toast.error('登入失敗，請檢查用戶名和密碼')
       }
     } catch (error: any) {
       console.error('Login error:', error)
-      toast.error(error.response?.data?.message || '連接失敗，請檢查伺服器地址和 Token')
+      toast.error(error.response?.data?.message || '登入失敗，請檢查伺服器地址和憑證')
     } finally {
       setIsLoading(false)
     }
@@ -73,7 +79,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
         <Alert className="mb-4">
           <Info className="h-4 w-4" />
           <AlertDescription className="text-xs">
-            請在伺服器設定檔中配置 API Token，然後在此輸入相同的 Token
+            請輸入您的帳號和密碼以登入錄製伺服器
           </AlertDescription>
         </Alert>
 
@@ -91,15 +97,28 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="token">API Token</Label>
+            <Label htmlFor="username">用戶名</Label>
             <Input
-              id="token"
-              type="password"
-              placeholder="輸入 API Token"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
+              id="username"
+              type="text"
+              placeholder="輸入用戶名"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               disabled={isLoading}
-              autoComplete="off"
+              autoComplete="username"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="password">密碼</Label>
+            <Input
+              id="password"
+              type="password"
+              placeholder="輸入密碼"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
+              autoComplete="current-password"
             />
           </div>
 
@@ -108,7 +127,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             className="w-full" 
             disabled={isLoading}
           >
-            {isLoading ? '連接中...' : '連接'}
+            {isLoading ? '登入中...' : '登入'}
           </Button>
         </form>
       </Card>

@@ -54,14 +54,17 @@ class ApiClient {
     this.token = null
   }
 
-  async verifyToken(data: LoginRequest): Promise<boolean> {
+  async login(data: LoginRequest): Promise<{ token: string } | null> {
     try {
-      this.setToken(data.token)
-      await this.client.get('/api/records')
-      return true
+      const response = await this.client.post<{ token: string }>('/api/login', data)
+      if (response.data?.token) {
+        this.setToken(response.data.token)
+        return response.data
+      }
+      return null
     } catch (error) {
       this.clearAuth()
-      return false
+      return null
     }
   }
 

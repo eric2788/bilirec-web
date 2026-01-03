@@ -13,11 +13,11 @@
 ## Essential Features
 
 ### 用戶認證
-- **Functionality**: 使用 API Token 連接到後端伺服器
-- **Purpose**: 保護後端 API 訪問權限，確保只有持有 Token 的用戶可以管理錄製
-- **Trigger**: 應用啟動時檢查認證狀態，未連接則顯示連接表單
-- **Progression**: 顯示連接表單 → 輸入伺服器地址和 API Token → 驗證連接 → 存儲 Token → 進入主界面
-- **Success criteria**: 成功連接後可訪問所有功能，Token 持久化存儲，自動重連
+- **Functionality**: 使用用戶名和密碼登入後端伺服器
+- **Purpose**: 保護後端 API 訪問權限，確保只有授權用戶可以管理錄製
+- **Trigger**: 應用啟動時檢查認證狀態，未登入則顯示登入表單
+- **Progression**: 顯示登入表單 → 輸入伺服器地址、用戶名和密碼 → 提交登入請求 → 接收並存儲 Token → 進入主界面
+- **Success criteria**: 成功登入後可訪問所有功能，Token 持久化存儲，自動重連
 
 ### 錄製管理（網格視圖）
 - **Functionality**: 通過房間 ID 啟動/停止錄製，查看錄製狀態和統計數據
