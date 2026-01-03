@@ -37,16 +37,16 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
             錄製中
           </Badge>
         )
+      case 'recovering':
+        return (
+          <Badge variant="outline" className="border-accent text-accent">
+            恢復中
+          </Badge>
+        )
       case 'idle':
         return (
           <Badge variant="secondary">
             空閒
-          </Badge>
-        )
-      case 'error':
-        return (
-          <Badge variant="destructive">
-            錯誤
           </Badge>
         )
     }
@@ -94,7 +94,7 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
           </div>
         )}
 
-        {task.status === 'error' && task.error && (
+        {task.error && (
           <p className="text-sm text-destructive">
             {task.error}
           </p>

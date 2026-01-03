@@ -56,7 +56,7 @@ class ApiClient {
 
   async login(data: LoginRequest): Promise<{ token: string } | null> {
     try {
-      const response = await this.client.post<{ token: string }>('/api/login', data)
+      const response = await this.client.post<{ token: string }>('/login', data)
       if (response.data?.token) {
         this.setToken(response.data.token)
         return response.data
@@ -69,25 +69,25 @@ class ApiClient {
   }
 
   async getRecords(): Promise<RecordTask[]> {
-    const response = await this.client.get<RecordTask[]>('/api/records')
+    const response = await this.client.get<RecordTask[]>('/records')
     return response.data
   }
 
   async startRecord(data: StartRecordRequest): Promise<void> {
-    await this.client.post('/api/records/start', data)
+    await this.client.post('/records/start', data)
   }
 
   async stopRecord(roomId: number): Promise<void> {
-    await this.client.post(`/api/records/${roomId}/stop`)
+    await this.client.post(`/records/${roomId}/stop`)
   }
 
   async getFiles(): Promise<RecordFile[]> {
-    const response = await this.client.get<RecordFile[]>('/api/files')
+    const response = await this.client.get<RecordFile[]>('/files')
     return response.data
   }
 
-  getDownloadUrl(filePath: string): string {
-    return `${this.baseURL}/api/files/download?path=${encodeURIComponent(filePath)}`
+  getDownloadUrl(fileName: string): string {
+    return `${this.baseURL}/files/download?name=${encodeURIComponent(fileName)}`
   }
 }
 

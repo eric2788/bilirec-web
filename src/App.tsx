@@ -6,6 +6,7 @@ import { BottomNav } from '@/components/BottomNav'
 import { Button } from '@/components/ui/button'
 import { SignOut } from '@phosphor-icons/react'
 import { apiClient } from '@/lib/api'
+import { storage } from '@/lib/storage'
 import { toast, Toaster } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 
@@ -17,8 +18,8 @@ function App() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const token = await window.spark.kv.get<string>('auth-token')
-        const serverUrl = await window.spark.kv.get<string>('server-url')
+        const token = await storage.get<string>('auth-token')
+        const serverUrl = await storage.get<string>('server-url')
         
         if (token && serverUrl) {
           apiClient.setBaseURL(serverUrl)
@@ -47,7 +48,7 @@ function App() {
 
   const handleLogout = async () => {
     try {
-      await window.spark.kv.delete('auth-token')
+      await storage.delete('auth-token')
       apiClient.clearAuth()
       setIsAuthenticated(false)
       toast.success('已登出')

@@ -3,28 +3,41 @@ export interface LoginRequest {
   pass: string
 }
 
+export interface RoomInfo {
+  room_id: number
+  short_id: number
+  uid: number
+  title: string
+  cover: string
+  user_cover: string
+  keyframe: string
+  live_status: number
+  live_start_time: number
+  area_id: number
+  area_name: string
+  parent_area_id: number
+  parent_area_name: string
+  uname: string
+  face: string
+  description: string
+  online: number
+}
+
 export interface RecordTask {
   roomId: number
-  status: 'recording' | 'idle' | 'error' | 'waiting'
+  status: 'recording' | 'recovering' | 'idle'
   fileName?: string
   fileSize?: number
   recordedTime?: number
   startTime?: string
   error?: string
-  roomInfo?: {
-    title: string
-    uname: string
-    face: string
-    live_status: number
-    online?: number
-  }
+  roomInfo?: RoomInfo
 }
 
 export interface RecordFile {
-  path: string
   name: string
   size: number
-  modTime: string
+  time: number
   isDir: boolean
 }
 

@@ -1,10 +1,10 @@
-import { useState } from 'react'
-import { useKV } from '@github/spark/hooks'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
 import { apiClient } from '@/lib/api'
+import { storage } from '@/lib/storage'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Info } from '@phosphor-icons/react'
@@ -16,8 +16,16 @@ interface LoginViewProps {
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [serverUrl, setServerUrl] = useKV('server-url', 'http://localhost:8080')
+  const [serverUrl, setServerUrl] = useState('http://localhost:8080')
   const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    const loadServerUrl = async () => {
+      const saved = await storage.get<string>('server-url')
+      if (saved) setServerUrl(saved)
+    }
+    loadServerUrl()
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,8 +54,8 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       const result = await apiClient.login({ user: username, pass: password })
       
       if (result?.token) {
-        await window.spark.kv.set('auth-token', result.token)
-        await window.spark.kv.set('server-url', url)
+        await storage.set('auth-token', result.token)
+        await storage.set('server-url', url)
         
         toast.success('登入成功')
         onLoginSuccess()

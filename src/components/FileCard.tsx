@@ -9,7 +9,7 @@ import { apiClient } from '@/lib/api'
 
 interface FileCardProps {
   file: RecordFile
-  onNavigate?: (path: string) => void
+  onNavigate?: (fileName: string) => void
 }
 
 export function FileCard({ file, onNavigate }: FileCardProps) {
@@ -17,11 +17,11 @@ export function FileCard({ file, onNavigate }: FileCardProps) {
 
   const handleDownload = () => {
     if (file.isDir) {
-      onNavigate?.(file.path)
+      onNavigate?.(file.name)
       return
     }
     setIsDownloading(true)
-    const url = apiClient.getDownloadUrl(file.path)
+    const url = apiClient.getDownloadUrl(file.name)
     window.open(url, '_blank')
     setTimeout(() => setIsDownloading(false), 1000)
   }
@@ -30,7 +30,7 @@ export function FileCard({ file, onNavigate }: FileCardProps) {
     return (
       <Card 
         className="p-4 bg-card text-card-foreground transition-all hover:shadow-lg cursor-pointer active:scale-[0.98]"
-        onClick={() => onNavigate?.(file.path)}
+        onClick={() => onNavigate?.(file.name)}
       >
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0">
@@ -70,7 +70,7 @@ export function FileCard({ file, onNavigate }: FileCardProps) {
 
           <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
             <span className="font-mono">{formatFileSize(file.size)}</span>
-            <span>{formatDateTime(file.modTime)}</span>
+            <span>{formatDateTime(new Date(file.time).toISOString())}</span>
           </div>
 
           <Button 

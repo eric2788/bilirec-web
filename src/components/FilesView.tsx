@@ -83,7 +83,7 @@ export function FilesView() {
           <div className="space-y-3">
             {files.map((file, index) => (
               <FileCard 
-                key={`${file.path}-${index}`} 
+                key={`${file.name}-${index}`} 
                 file={file}
                 onNavigate={handleNavigate}
               />
