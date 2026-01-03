@@ -1,12 +1,5 @@
-.devcontainer/devcontainer.json
-.devcontainer/onCreate.sh
-.devcontainer/postStartCommand.sh
-.devcontainer/refreshTools.sh
-.devcontainer/spark.conf
 .file-manifest
 .gitignore
-.spark-initial-sha
-.spark-workbench-id
 CHANGES.md
 MIGRATION.md
 MIGRATION_COMPLETE.md
@@ -17,13 +10,10 @@ SETUP.md
 index.html
 package-lock.json
 package.json
-packages/spark-tools/LICENSE
-packages/spark-tools/package.json
 public/icon-192.svg
 public/icon-512.svg
 public/manifest.json
 public/sw.js
-spark.meta.json
 src/App.tsx
 src/components/BottomNav.tsx
 src/components/EmptyState.tsx

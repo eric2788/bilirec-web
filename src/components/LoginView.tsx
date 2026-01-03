@@ -7,7 +7,7 @@ import { apiClient } from '@/lib/api'
 import { storage } from '@/lib/storage'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Info } from '@phosphor-icons/react'
+import { InfoIcon } from '@phosphor-icons/react'
 
 interface LoginViewProps {
   onLoginSuccess: () => void
@@ -37,12 +37,8 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       return
     }
 
-    if (!username.trim()) {
-      toast.error('請輸入用戶名')
-      return
-    }
-
-    if (!password.trim()) {
+    // If username provided, require password as well
+    if (username.trim() && !password.trim()) {
       toast.error('請輸入密碼')
       return
     }
@@ -50,21 +46,42 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
     setIsLoading(true)
 
     try {
+      // Always set base URL and persist it so the app can attempt unauthenticated access
       apiClient.setBaseURL(url)
+      await storage.set('server-url', url)
+
+      // If no credentials provided, just try accessing a protected endpoint to see if auth is required
+      if (!username.trim() && !password.trim()) {
+        try {
+          await apiClient.getRecords()
+          toast.success('連線成功 (無需登入)')
+          onLoginSuccess()
+        } catch (err) {
+          console.error('Unauthenticated access failed:', err)
+          toast.error('伺服器需要登入，請提供憑證')
+        }
+        return
+      }
+
+      // Credentials provided – try login
       const result = await apiClient.login({ user: username, pass: password })
-      
-      if (result?.token) {
-        await storage.set('auth-token', result.token)
-        await storage.set('server-url', url)
-        
+      if (result) {
+        // Server should set an HttpOnly cookie on successful login
         toast.success('登入成功')
         onLoginSuccess()
       } else {
-        toast.error('登入失敗，請檢查用戶名和密碼')
+        // If login failed, fallback to try unauthenticated access (in case server does not require auth)
+        try {
+          await apiClient.getRecords()
+          toast.success('連線成功 (無需登入)')
+          onLoginSuccess()
+        } catch (err) {
+          toast.error('登入失敗，請檢查用戶名和密碼')
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error)
-      toast.error(error.response?.data?.message || '登入失敗，請檢查伺服器地址和憑證')
+      toast.error(error.response?.data || '登入失敗，請檢查伺服器地址和憑證')
     } finally {
       setIsLoading(false)
     }
@@ -85,7 +102,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
         </div>
 
         <Alert className="mb-4">
-          <Info className="h-4 w-4" />
+          <InfoIcon size={16} />
           <AlertDescription className="text-xs">
             請輸入您的帳號和密碼以登入錄製伺服器
           </AlertDescription>

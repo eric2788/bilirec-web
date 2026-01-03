@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
-import { Play, Stop, User, Clock, Database } from '@phosphor-icons/react'
+import { PlayIcon, StopIcon, UserIcon, ClockIcon, DatabaseIcon } from '@phosphor-icons/react'
 import { formatFileSize, formatDuration, cn } from '@/lib/utils'
 import type { RecordTask } from '@/lib/types'
 
@@ -61,7 +61,7 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
               <Avatar className="w-12 h-12 shrink-0">
                 <AvatarImage src={task.roomInfo.face} alt={task.roomInfo.uname} />
                 <AvatarFallback>
-                  <User weight="fill" />
+                  <UserIcon weight="fill" />
                 </AvatarFallback>
               </Avatar>
             )}
@@ -81,13 +81,13 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
           <div className="grid grid-cols-2 gap-2 text-sm">
             {task.recordedTime !== undefined && (
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Clock className="w-4 h-4 shrink-0" />
+                <ClockIcon size={16} />
                 <span className="font-mono">{formatDuration(task.recordedTime)}</span>
               </div>
             )}
             {task.fileSize !== undefined && (
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Database className="w-4 h-4 shrink-0" />
+                <DatabaseIcon size={16} />
                 <span className="font-mono">{formatFileSize(task.fileSize)}</span>
               </div>
             )}
@@ -110,12 +110,12 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
         >
           {task.status === 'recording' ? (
             <>
-              <Stop className="w-5 h-5" />
+              <StopIcon size={20} />
               停止錄製
             </>
           ) : (
             <>
-              <Play className="w-5 h-5" />
+              <PlayIcon size={20} />
               開始錄製
             </>
           )}

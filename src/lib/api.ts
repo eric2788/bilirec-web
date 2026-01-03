@@ -12,20 +12,15 @@ class ApiClient {
       headers: {
         'Content-Type': 'application/json',
       },
-    })
-
-    this.client.interceptors.request.use((config) => {
-      if (this.token) {
-        config.headers['Authorization'] = `Bearer ${this.token}`
-      }
-      return config
+      // Send cookies for cross-origin requests (server must set cookie with HttpOnly)
+      withCredentials: true,
     })
 
     this.client.interceptors.response.use(
       (response) => response,
       (error) => {
         if (error.response?.status === 401 || error.response?.status === 403) {
-          this.clearAuth()
+          // If unauthorized, reload so app can show login UI
           window.location.reload()
         }
         return Promise.reject(error)
@@ -42,52 +37,56 @@ class ApiClient {
     return this.baseURL
   }
 
-  setToken(token: string) {
-    this.token = token
-  }
-
-  getToken(): string | null {
-    return this.token
-  }
+  // Token is handled by an HttpOnly cookie set by the server. We don't store it client-side.
 
   clearAuth() {
-    this.token = null
+    // no-op for cookie auth; server must clear cookie on logout
   }
 
-  async login(data: LoginRequest): Promise<{ token: string } | null> {
+  async login(data: LoginRequest): Promise<any | null> {
     try {
-      const response = await this.client.post<{ token: string }>('/login', data)
-      if (response.data?.token) {
-        this.setToken(response.data.token)
-        return response.data
-      }
-      return null
+      // withCredentials:true makes browser include cookies and accept Set-Cookie from server
+      const response = await this.client.post('/login', data)
+      return response.data
     } catch (error) {
-      this.clearAuth()
       return null
     }
   }
 
+  async logout(): Promise<void> {
+    try {
+      await this.client.post('/logout')
+    } catch (error) {
+      // ignore
+    }
+  }
+
   async getRecords(): Promise<RecordTask[]> {
-    const response = await this.client.get<RecordTask[]>('/records')
+    const response = await this.client.get<RecordTask[]>('/record/list')
     return response.data
   }
 
   async startRecord(data: StartRecordRequest): Promise<void> {
-    await this.client.post('/records/start', data)
+    const roomId = data.roomId
+    await this.client.post(`/record/${roomId}/start`, {})
   }
 
   async stopRecord(roomId: number): Promise<void> {
-    await this.client.post(`/records/${roomId}/stop`)
+    await this.client.post(`/record/${roomId}/stop`, {})
   }
 
-  async getFiles(): Promise<RecordFile[]> {
-    const response = await this.client.get<RecordFile[]>('/files')
+  async getFiles(path: string = ''): Promise<RecordFile[]> {
+    const encodedPath = path.split('/').filter(Boolean).map(encodeURIComponent).join('/')
+    const url = encodedPath ? `/files/${encodedPath}` : '/files/'
+    const response = await this.client.get<RecordFile[]>(url)
     return response.data
   }
 
-  getDownloadUrl(fileName: string): string {
-    return `${this.baseURL}/files/download?name=${encodeURIComponent(fileName)}`
+  async downloadFile(path: string): Promise<Blob> {
+    const encodedPath = path.split('/').filter(Boolean).map(encodeURIComponent).join('/')
+    const url = `/files/${encodedPath}`
+    const response = await this.client.post(url, null, { responseType: 'blob' })
+    return response.data
   }
 }
 

@@ -2,28 +2,46 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { DownloadSimple, FileVideo, Folder } from '@phosphor-icons/react'
+import { DownloadSimpleIcon, FileVideoIcon, FolderIcon } from '@phosphor-icons/react'
 import { formatFileSize, formatDateTime } from '@/lib/utils'
 import type { RecordFile } from '@/lib/types'
 import { apiClient } from '@/lib/api'
+import { toast } from 'sonner'
 
 interface FileCardProps {
   file: RecordFile
   onNavigate?: (fileName: string) => void
+  currentPath?: string
 }
 
-export function FileCard({ file, onNavigate }: FileCardProps) {
+export function FileCard({ file, onNavigate, currentPath = '' }: FileCardProps) {
   const [isDownloading, setIsDownloading] = useState(false)
 
-  const handleDownload = () => {
+  const handleDownload = async () => {
     if (file.isDir) {
-      onNavigate?.(file.name)
+      const path = currentPath ? `${currentPath}/${file.name}` : file.name
+      onNavigate?.(path)
       return
     }
+
     setIsDownloading(true)
-    const url = apiClient.getDownloadUrl(file.name)
-    window.open(url, '_blank')
-    setTimeout(() => setIsDownloading(false), 1000)
+    try {
+      const fullPath = currentPath ? `${currentPath}/${file.name}` : file.name
+      const blob = await apiClient.downloadFile(fullPath)
+      const href = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = href
+      a.download = file.name.split('/').pop() || file.name
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(href)
+    } catch (error: any) {
+      console.error('Download failed:', error)
+      toast.error('下載失敗')
+    } finally {
+      setIsDownloading(false)
+    }
   }
 
   if (file.isDir) {
@@ -33,8 +51,8 @@ export function FileCard({ file, onNavigate }: FileCardProps) {
         onClick={() => onNavigate?.(file.name)}
       >
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-            <Folder className="w-6 h-6 text-secondary-foreground" weight="fill" />
+            <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
+            <FolderIcon weight="fill" size={24} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-card-foreground truncate">{file.name}</p>
@@ -50,14 +68,14 @@ export function FileCard({ file, onNavigate }: FileCardProps) {
   return (
     <Card className="p-4 bg-card text-card-foreground transition-all hover:shadow-lg">
       <div className="flex gap-3">
-        <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0">
-          <FileVideo className="w-6 h-6 text-secondary-foreground" weight="fill" />
+        <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
+          <FileVideoIcon weight="fill" size={24} />
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-card-foreground break-words">
+              <p className="font-semibold text-card-foreground wrap-break-word">
                 {file.name}
               </p>
             </div>
@@ -79,7 +97,7 @@ export function FileCard({ file, onNavigate }: FileCardProps) {
             disabled={isDownloading}
             onClick={handleDownload}
           >
-            <DownloadSimple className="w-4 h-4" />
+            <DownloadSimpleIcon size={16} />
             下載
           </Button>
         </div>

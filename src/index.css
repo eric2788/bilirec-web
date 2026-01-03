@@ -68,6 +68,16 @@
   --radius-full: 9999px;
 }
 
+/* Smooth color transitions for theme changes */
+body, .bg-card, .bg-popover, .card, .toast, .popover {
+  transition: background-color 220ms ease, color 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+}
+
+/* Provide a subtle elevated look for cards in dark mode */
+.bg-card {
+  box-shadow: var(--card-shadow, none);
+}
+
 body {
   font-family: 'Noto Sans TC', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -95,4 +105,50 @@ body {
 
 .safe-area-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* Support next-themes data attribute for dark mode (so theme toggles have visible effect) */
+[data-appearance="dark"] {
+  /* Softer dark background (not fully black) */
+  --background: oklch(0.12 0.02 240);
+  --foreground: oklch(0.96 0.01 240);
+
+  /* Cards slightly lighter than background for gentle separation */
+  --card: oklch(0.18 0.02 240);
+  --card-foreground: oklch(0.98 0.01 240);
+
+  /* Popovers / overlays */
+  --popover: oklch(0.18 0.02 240);
+  --popover-foreground: oklch(0.96 0.01 240);
+
+  /* Reduce saturation of primary in dark mode */
+  --primary: oklch(0.66 0.06 220);
+  --primary-foreground: oklch(0.98 0.01 240);
+
+  --secondary: oklch(0.28 0.03 240);
+  --secondary-foreground: oklch(0.96 0.01 240);
+
+  /* Subtle borders and elevation */
+  --border: oklch(1 0 0 / 6%);
+  --input: oklch(1 0 0 / 8%);
+  --ring: oklch(0.56 0 0);
+  --card-shadow: 0 10px 30px rgba(0,0,0,0.48);
+
+  /* Muted text in dark mode should be less saturated but visible */
+  --muted-foreground: oklch(0.75 0.02 240);
+}
+
+/* Dark-mode specific tweaks for components */
+[data-appearance="dark"] .bg-card {
+  box-shadow: var(--card-shadow);
+  border-color: rgba(255,255,255,0.04);
+}
+
+[data-appearance="dark"] .sticky {
+  background-color: color-mix(in srgb, var(--card) 90%, transparent);
+}
+
+/* Slight hover background for header buttons in dark mode */
+[data-appearance="dark"] .rounded-md.p-1:hover {
+  background-color: rgba(255,255,255,0.03);
 }

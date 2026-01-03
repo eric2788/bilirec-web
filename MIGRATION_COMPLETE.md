@@ -47,19 +47,19 @@ Successfully migrated the Bilibili recording management frontend from Spark to a
 ## Files That Can Be Deleted
 
 These Spark-specific files can be safely removed:
-- `spark.meta.json` ⚠️ (still present - delete manually if needed)
+- `spark.meta.json` ⚠️ (removed)
 - `.spark-initial-sha`
 - `.spark-workbench-id`
 - `packages/` directory
 - `pids/` directory
 - `.file-manifest`
-- `.devcontainer/`
+- `.devcontainer/` (removed)
 
 ## Next Steps
 
 1. **Clean up** (optional):
    ```bash
-   rm -rf spark.meta.json .spark-* packages pids .file-manifest
+   rm -rf .spark-* packages pids .file-manifest
    ```
 
 2. **Install dependencies**:

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { FileCard } from './FileCard'
 import { EmptyState } from './EmptyState'
 import { Button } from '@/components/ui/button'
-import { CaretLeft } from '@phosphor-icons/react'
+import { CaretLeftIcon } from '@phosphor-icons/react'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordFile } from '@/lib/types'
@@ -16,7 +16,7 @@ export function FilesView() {
   const fetchFiles = async (path: string = '') => {
     setIsLoading(true)
     try {
-      const data = await apiClient.getFiles()
+      const data = await apiClient.getFiles(path)
       setFiles(data.filter(f => !f.isDir || f.name !== '..'))
     } catch (error: any) {
       console.error('Failed to fetch files:', error)
@@ -50,7 +50,7 @@ export function FilesView() {
               size="sm"
               onClick={handleBack}
             >
-              <CaretLeft className="w-5 h-5" />
+              <CaretLeftIcon size={20} />
             </Button>
           )}
           <h2 className="text-xl font-bold">錄製檔案</h2>
@@ -86,6 +86,7 @@ export function FilesView() {
                 key={`${file.name}-${index}`} 
                 file={file}
                 onNavigate={handleNavigate}
+                currentPath={currentPath}
               />
             ))}
           </div>

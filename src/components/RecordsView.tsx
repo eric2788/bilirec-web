@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus } from '@phosphor-icons/react'
+import { PlusIcon } from '@phosphor-icons/react'
 import { RecordCard } from './RecordCard'
 import { EmptyState } from './EmptyState'
 import { apiClient } from '@/lib/api'
@@ -41,7 +41,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
 
   const handleAddRecord = async () => {
     const id = parseInt(roomId.trim())
-    
+
     if (!roomId.trim() || isNaN(id)) {
       toast.error('請輸入有效的房間 ID')
       return
@@ -57,7 +57,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to start record:', error)
-      toast.error(error.response?.data?.message || '啟動錄製失敗')
+      toast.error(error.response?.data || '啟動錄製失敗')
     } finally {
       setIsAdding(false)
     }
@@ -71,7 +71,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to start record:', error)
-      toast.error(error.response?.data?.message || '啟動錄製失敗')
+      toast.error(error.response?.data || '啟動錄製失敗')
     }
   }
 
@@ -83,7 +83,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to stop record:', error)
-      toast.error(error.response?.data?.message || '停止錄製失敗')
+      toast.error(error.response?.data || '停止錄製失敗')
     }
   }
 
@@ -95,7 +95,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
-                <Plus className="w-5 h-5" />
+                <PlusIcon size={20} />
                 添加
               </Button>
             </DialogTrigger>
@@ -112,8 +112,8 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
                   onChange={(e) => setRoomId(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddRecord()}
                 />
-                <Button 
-                  onClick={handleAddRecord} 
+                <Button
+                  onClick={handleAddRecord}
                   className="w-full"
                   disabled={isAdding}
                 >
