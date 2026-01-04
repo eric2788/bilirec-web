@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { VideoCamera, File } from '@phosphor-icons/react'
+import { FileIcon } from '@phosphor-icons/react'
 
 type LeftSidebarProps = {
   activeTab: 'records' | 'files'
@@ -8,13 +8,13 @@ type LeftSidebarProps = {
 
 export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
   return (
-    <aside className="hidden md:flex md:flex-col w-56 h-full p-4 border-r border-border bg-card/95">
+    <aside className="hidden md:flex md:flex-col w-56 h-full p-4 border-r border-border bg-sidebar/95 text-sidebar-foreground">
       <nav className="flex flex-col gap-2 mt-2">
         <button
           onClick={() => onTabChange('records')}
           aria-pressed={activeTab === 'records'}
           className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full',
+            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full cursor-pointer',
             activeTab === 'records'
               ? 'text-primary bg-primary/10'
               : 'text-muted-foreground hover:text-primary hover:bg-secondary/10'
@@ -33,13 +33,13 @@ export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
           onClick={() => onTabChange('files')}
           aria-pressed={activeTab === 'files'}
           className={cn(
-            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full',
+            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full cursor-pointer',
             activeTab === 'files'
               ? 'text-primary bg-primary/10'
               : 'text-muted-foreground hover:text-primary hover:bg-secondary/10'
           )}
         >
-          <span className="shrink-0"><File size={18} weight="bold" /></span>
+          <span className="shrink-0"><FileIcon size={18} weight="bold" /></span>
           <span>錄製檔案</span>
         </button>
       </nav>

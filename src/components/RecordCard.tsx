@@ -2,27 +2,23 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { PlayIcon, StopIcon, UserIcon, ClockIcon, DatabaseIcon } from '@phosphor-icons/react'
 import { formatFileSize, formatDuration, cn } from '@/lib/utils'
 import type { RecordTask } from '@/lib/types'
 
 interface RecordCardProps {
   task: RecordTask
-  onStart: (roomId: number) => void
   onStop: (roomId: number) => void
 }
 
-export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
+export function RecordCard({ task, onStop }: RecordCardProps) {
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleAction = async () => {
+  const handleStop = () => {
     setIsLoading(true)
     try {
       if (task.status === 'recording') {
-        await onStop(task.roomId)
-      } else {
-        await onStart(task.roomId)
+        onStop(task.roomId)
       }
     } finally {
       setIsLoading(false)
@@ -53,40 +49,85 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
   }
 
   return (
-    <Card className="p-4 bg-card text-card-foreground transition-all hover:shadow-lg active:scale-[0.98]">
+    <Card className="p-4 record-card transition-all hover:shadow-lg">
       <div className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3 flex-1 min-w-0">
-            {task.roomInfo?.face && (
-              <Avatar className="w-12 h-12 shrink-0">
-                <AvatarImage src={task.roomInfo.face} alt={task.roomInfo.uname} />
-                <AvatarFallback>
-                  <UserIcon weight="fill" />
-                </AvatarFallback>
-              </Avatar>
+        <div className="relative">
+          <div className="flex flex-col sm:flex-row items-start gap-3">
+            {task.roomInfo?.user_cover ? (
+              <div className="w-full sm:w-40 sm:h-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
+                <img
+                  src={task.roomInfo.user_cover}
+                  alt={task.roomInfo.title ?? task.roomInfo.uid.toString()}
+                  referrerPolicy="no-referrer"
+                  className="w-full object-cover"
+                />
+              </div>
+            ) : (
+              <div className="w-full sm:w-40 sm:h-24 shrink-0 bg-muted rounded-md flex items-center justify-center p-4">
+                <UserIcon size={20} />
+              </div>
             )}
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-card-foreground truncate">
-                {task.roomInfo?.uname || `房間 ${task.roomId}`}
-              </p>
-              <p className="text-sm text-muted-foreground truncate">
-                {task.roomInfo?.title || '載入中...'}
-              </p>
+
+            <div className="flex flex-col flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-semibold text-card-foreground record-title truncate">
+                    {`直播間 ${task.roomInfo?.room_id}`}
+                  </p>
+                  <p className="text-sm text-muted-foreground truncate">
+                    {task.roomInfo?.title || '載入中...'}
+                  </p>
+                </div>
+
+                <div className="flex flex-col items-end gap-2 ml-2 shrink-0">
+                  {task.roomInfo?.online !== undefined && (
+                    <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                      <UserIcon size={16} />
+                      <span className="font-mono" title="在線人數">{(task.roomInfo.online ?? 0).toLocaleString()}</span>
+                    </div>
+                  )}
+
+                  {/* status badge placed here to avoid covering the cover image (hidden on mobile) */}
+                  <div className="hidden sm:block">
+                    {getStatusBadge()}
+                  </div>
+                </div>
+              </div>
+
+              {task.roomInfo?.description && (
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-3 wrap-break-word break-all whitespace-normal">
+                  {task.roomInfo.description}
+                </p>
+              )}
             </div>
           </div>
-          {getStatusBadge()}
+
+          {/* viewers shown below on mobile */}
+          {task.roomInfo?.online !== undefined && (
+            <div className="mt-2 sm:hidden flex items-center gap-2 text-sm text-muted-foreground justify-between w-full">
+              <div className="flex items-center gap-2">
+                <UserIcon size={16} />
+                <span className="font-mono" title="在線人數">{(task.roomInfo.online ?? 0).toLocaleString()}</span>
+              </div>
+
+              {/* show badge on mobile row too (aligned right) */}
+              <div className="ml-2 shrink-0">
+                {getStatusBadge()}
+              </div>
+            </div>
+          )}
         </div>
 
         {task.status === 'recording' && (
           <div className="grid grid-cols-2 gap-2 text-sm">
             {task.recordedTime !== undefined && (
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground" title="預計錄製時間">
                 <ClockIcon size={16} />
                 <span className="font-mono">{formatDuration(task.recordedTime)}</span>
               </div>
             )}
             {task.fileSize !== undefined && (
-              <div className="flex items-center gap-2 text-muted-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground" title="預計錄製檔案大小">
                 <DatabaseIcon size={16} />
                 <span className="font-mono">{formatFileSize(task.fileSize)}</span>
               </div>
@@ -100,26 +141,33 @@ export function RecordCard({ task, onStart, onStop }: RecordCardProps) {
           </p>
         )}
 
-        <Button
-          onClick={handleAction}
-          disabled={isLoading}
-          className={cn(
-            'w-full',
-            task.status === 'recording' ? 'bg-destructive hover:bg-destructive/90' : ''
-          )}
-        >
-          {task.status === 'recording' ? (
-            <>
+        {task.status === 'recording' ? (
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              asChild
+              variant="outline"
+              className="w-full sm:w-1/2 transition-colors hover:bg-muted/60 dark:hover:bg-accent/80"
+            >
+              <a
+                href={`https://live.bilibili.com/${task.roomInfo?.room_id ?? task.roomId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                進入直播間
+              </a>
+            </Button>
+
+            <Button
+              onClick={handleStop}
+              disabled={isLoading}
+              variant="destructive"
+              className="w-full sm:w-1/2 transition-all hover:bg-destructive/90 hover:shadow-md hover:ring-1 hover:ring-destructive/30"
+            >
               <StopIcon size={20} />
               停止錄製
-            </>
-          ) : (
-            <>
-              <PlayIcon size={20} />
-              開始錄製
-            </>
-          )}
-        </Button>
+            </Button>
+          </div>
+        ) : null}
       </div>
     </Card>
   )

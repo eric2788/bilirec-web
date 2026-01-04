@@ -23,7 +23,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
 
   const fetchTasks = async () => {
     try {
-      const data = await apiClient.getRecords()
+      const data = await apiClient.getRecordTasks()
       setTasks(data)
     } catch (error: any) {
       console.error('Failed to fetch tasks:', error)
@@ -63,22 +63,11 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
     }
   }
 
-  const handleStart = async (roomId: number) => {
-    try {
-      await apiClient.startRecord({ roomId })
-      toast.success('已開始錄製')
-      fetchTasks()
-      onRefresh?.()
-    } catch (error: any) {
-      console.error('Failed to start record:', error)
-      toast.error(error.response?.data || '啟動錄製失敗')
-    }
-  }
-
   const handleStop = async (roomId: number) => {
     try {
       await apiClient.stopRecord(roomId)
       toast.success('已停止錄製')
+      // server will remove the record from the list; refresh
       fetchTasks()
       onRefresh?.()
     } catch (error: any) {
@@ -127,7 +116,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
 
       <div className="flex-1 overflow-y-auto p-4 pb-20">
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             {[1, 2].map((i) => (
               <Skeleton key={i} className="h-48" />
             ))}
@@ -144,12 +133,11 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
             description="點擊右上角的「添加」按鈕開始錄製"
           />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             {tasks.map((task) => (
               <RecordCard
                 key={task.roomId}
                 task={task}
-                onStart={handleStart}
                 onStop={handleStop}
               />
             ))}

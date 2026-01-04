@@ -17,10 +17,11 @@ export function FilesView() {
     setIsLoading(true)
     try {
       const data = await apiClient.getFiles(path)
-      setFiles(data.filter(f => !f.isDir || f.name !== '..'))
+      const list = Array.isArray(data) ? data.filter(f => !f.is_dir || f.name !== '..') : []
+      setFiles(list)
     } catch (error: any) {
       console.error('Failed to fetch files:', error)
-      toast.error('無法載入檔案列表')
+      toast.error('無法載入檔案列表' + (error.response?.data ? `: ${error.response.data}` : ''))
     } finally {
       setIsLoading(false)
     }
@@ -86,6 +87,7 @@ export function FilesView() {
                 key={`${file.name}-${index}`} 
                 file={file}
                 onNavigate={handleNavigate}
+                onDelete={() => fetchFiles(currentPath)}
                 currentPath={currentPath}
               />
             ))}

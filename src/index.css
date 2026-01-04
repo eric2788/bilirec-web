@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import "tw-animate-css";
 
+/* Canonical theme variables live in this file. Do NOT duplicate these variables in other CSS files. */
+
 @layer base {
   * {
     @apply border-border
@@ -8,33 +10,33 @@
 }
 
 :root {
-  --background: oklch(0.95 0.01 240);
-  --foreground: oklch(0.20 0.02 240);
+  --background: #E9F0F5;
+  --foreground: #0E171E;
 
-  --card: oklch(0.25 0.02 240);
-  --card-foreground: oklch(0.95 0.01 240);
+  --card: #19232A;
+  --card-foreground: #E9F0F5;
   
-  --popover: oklch(0.99 0 0);
-  --popover-foreground: oklch(0.20 0.02 240);
+  --popover: #FCFCFC;
+  --popover-foreground: #0E171E;
 
-  --primary: oklch(0.70 0.15 240);
-  --primary-foreground: oklch(0.99 0 0);
+  --primary: #26A9F1;
+  --primary-foreground: #FCFCFC;
   
-  --secondary: oklch(0.88 0.02 240);
-  --secondary-foreground: oklch(0.20 0.02 240);
+  --secondary: #CCDAE4;
+  --secondary-foreground: #0E171E;
   
-  --muted: oklch(0.90 0.01 240);
-  --muted-foreground: oklch(0.50 0.02 240);
+  --muted: #D8DFE4;
+  --muted-foreground: #59656E;
   
-  --accent: oklch(0.75 0.20 340);
-  --accent-foreground: oklch(0.99 0 0);
+  --accent: #3EAFFA;
+  --accent-foreground: #FCFCFC;
   
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.99 0 0);
+  --destructive: #E7000B;
+  --destructive-foreground: #FCFCFC;
 
-  --border: oklch(0.85 0.01 240);
-  --input: oklch(0.85 0.01 240);
-  --ring: oklch(0.70 0.15 240);
+  --border: #C8CFD4;
+  --input: #C8CFD4;
+  --ring: #26A9F1;
 
   --radius: 0.75rem;
 }
@@ -110,32 +112,32 @@ body {
 /* Support next-themes data attribute for dark mode (so theme toggles have visible effect) */
 [data-appearance="dark"] {
   /* Softer dark background (not fully black) */
-  --background: oklch(0.12 0.02 240);
-  --foreground: oklch(0.96 0.01 240);
+  --background: #01060C;
+  --foreground: #ECF3F8;
 
   /* Cards slightly lighter than background for gentle separation */
-  --card: oklch(0.18 0.02 240);
-  --card-foreground: oklch(0.98 0.01 240);
+  --card: #09131A;
+  --card-foreground: #F3FAFF;
 
   /* Popovers / overlays */
-  --popover: oklch(0.18 0.02 240);
-  --popover-foreground: oklch(0.96 0.01 240);
+  --popover: #09131A;
+  --popover-foreground: #ECF3F8;
 
   /* Reduce saturation of primary in dark mode */
-  --primary: oklch(0.66 0.06 220);
-  --primary-foreground: oklch(0.98 0.01 240);
+  --primary: #689BAC;
+  --primary-foreground: #F3FAFF;
 
-  --secondary: oklch(0.28 0.03 240);
-  --secondary-foreground: oklch(0.96 0.01 240);
+  --secondary: #1B2B36;
+  --secondary-foreground: #ECF3F8;
 
   /* Subtle borders and elevation */
-  --border: oklch(1 0 0 / 6%);
-  --input: oklch(1 0 0 / 8%);
-  --ring: oklch(0.56 0 0);
+  --border: #FFFFFF0F;
+  --input: #FFFFFF14;
+  --ring: #747474;
   --card-shadow: 0 10px 30px rgba(0,0,0,0.48);
 
   /* Muted text in dark mode should be less saturated but visible */
-  --muted-foreground: oklch(0.75 0.02 240);
+  --muted-foreground: #A3B0BA;
 }
 
 /* Dark-mode specific tweaks for components */
@@ -148,7 +150,61 @@ body {
   background-color: color-mix(in srgb, var(--card) 90%, transparent);
 }
 
+/* File card colors: white in light theme; keep good contrast in dark mode */
+.file-card {
+  /* pure white background in light mode */
+  background-color: #ffffff;
+  color: var(--color-foreground);
+  /* remove dark ring; use a very light neutral border for separation */
+  border: 1px solid color-mix(in srgb, var(--color-border) 92%, white);
+  box-shadow: none;
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.file-card .file-name {
+  /* make file names dark gray in light theme for good contrast without pure black */
+  color: #333333;
+}
+
+[data-appearance="dark"] .file-card {
+  /* in dark mode keep the dark card style but ensure readability */
+  background-color: color-mix(in srgb, var(--card) 94%, transparent);
+  color: var(--card-foreground);
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: none;
+}
+
+/* Ensure file-name is readable in dark mode as well */
+[data-appearance="dark"] .file-card .file-name {
+  color: var(--card-foreground);
+}
+
+
 /* Slight hover background for header buttons in dark mode */
 [data-appearance="dark"] .rounded-md.p-1:hover {
   background-color: rgba(255,255,255,0.03);
+}
+
+/* Record card colors: match FileCard styling for light and dark themes */
+.record-card {
+  background-color: #ffffff;
+  color: var(--color-foreground);
+  border: 1px solid color-mix(in srgb, var(--color-border) 92%, white);
+  box-shadow: none;
+  transition: background-color 220ms ease, color 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.record-card .record-title {
+  color: #111827;
+}
+
+[data-appearance="dark"] .record-card {
+  background-color: color-mix(in srgb, var(--card) 94%, transparent);
+  color: var(--card-foreground);
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: none;
+}
+
+[data-appearance="dark"] .record-card .record-title {
+  color: var(--card-foreground);
 }

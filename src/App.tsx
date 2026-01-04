@@ -30,7 +30,7 @@ function App() {
           apiClient.setBaseURL(serverUrl)
           // Try a harmless authenticated request to verify cookie-based auth
           try {
-            await apiClient.getRecords()
+            await apiClient.getRecordTasks()
             setIsAuthenticated(true)
           } catch (error) {
             setIsAuthenticated(false)
@@ -112,7 +112,7 @@ function App() {
             <Button
               variant="ghost"
               size="sm"
-              className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-card/10 hover:scale-[1.02]"
+              className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
               aria-label="切換主題"
               onClick={() => {
                 const active = resolvedTheme || theme || 'light'
@@ -126,7 +126,7 @@ function App() {
               variant="ghost"
               size="sm"
               onClick={handleLogout}
-              className="shrink-0 text-card-foreground hover:text-destructive rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-card/10 hover:scale-[1.02]"
+              className="shrink-0 text-card-foreground hover:text-destructive rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
               aria-label="登出"
             >
               <SignOutIcon size={20} />
