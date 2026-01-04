@@ -28,13 +28,8 @@ function App() {
         const serverUrl = await storage.get<string>('server-url')
         if (serverUrl) {
           apiClient.setBaseURL(serverUrl)
-          // Try a harmless authenticated request to verify cookie-based auth
-          try {
-            await apiClient.getRecordTasks()
-            setIsAuthenticated(true)
-          } catch (error) {
-            setIsAuthenticated(false)
-          }
+          await apiClient.getRecords()
+          setIsAuthenticated(true)
         }
       } catch (error) {
         console.error('Auth check failed:', error)
@@ -50,6 +45,15 @@ function App() {
         console.error('Service Worker registration failed:', error)
       })
     }
+
+    const onUnauthorized = () => {
+      setIsAuthenticated(false)
+      setIsCheckingAuth(false)
+      toast.error('會話逾期，請重新登入') // or localized message you prefer
+    }
+
+    window.addEventListener('api:unauthorized', onUnauthorized)
+    return () => window.removeEventListener('api:unauthorized', onUnauthorized)
   }, [])
 
   const handleLoginSuccess = () => {
