@@ -138,7 +138,7 @@ class ApiClient {
       .filter(Boolean)
       .map(encodeURIComponent)
       .join("/");
-    const url = encodedPath ? `/files/${encodedPath}` : "/files";
+    const url = encodedPath ? `/files/browse/${encodedPath}` : "/files/browse";
     const response = await this.client.get<RecordFile[]>(url);
     return response.data;
   }
@@ -216,9 +216,9 @@ class ApiClient {
       .filter(Boolean)
       .map(encodeURIComponent)
       .join("/");
-    const url = `/files/${encodedPath}` + (options?.format ? `?format=${encodeURIComponent(options.format)}` : "");
+    const url = `/files/download/${encodedPath}` + (options?.format ? `?format=${encodeURIComponent(options.format)}` : "");
 
-    return this.requestAsStream("POST", url, { body: {}, onProgress: options?.onProgress, signal: options?.signal });
+    return this.requestAsStream("GET", url, { body: {}, onProgress: options?.onProgress, signal: options?.signal });
   }
 
   async deleteFiles(paths: string[]): Promise<void> {
