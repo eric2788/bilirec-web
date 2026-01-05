@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useDeferredValue } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon } from '@phosphor-icons/react'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' 
+import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, XIcon } from '@phosphor-icons/react'
 import { formatFileSize } from '@/lib/utils'
 import type { RecordFile } from '@/lib/types'
 import { apiClient } from '@/lib/api'
@@ -19,6 +20,10 @@ interface FileCardProps {
 export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileCardProps) {
   const [isDownloading, setIsDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [downloadFormat, setDownloadFormat] = useState<'flv' | 'mp4'>('flv')
+  const [downloadProgress, setDownloadProgress] = useState<{ loaded: number; total?: number } | null>(null)
+  const deferredProgress = useDeferredValue(downloadProgress)
+  const [downloadController, setDownloadController] = useState<AbortController | null>(null)
 
   // Normalize incoming file shape and guard against missing data
   const name = typeof file.name === 'string' ? file.name : '未命名'
@@ -65,22 +70,42 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     }
 
     setIsDownloading(true)
+    setDownloadProgress(null)
+
+    const controller = new AbortController()
+    setDownloadController(controller)
+
     try {
       const fullPath = currentPath ? `${currentPath}/${name}` : name
-      const blob = await apiClient.downloadFile(fullPath)
+      const blob = await apiClient.downloadFile(fullPath, {
+        format: downloadFormat,
+        signal: controller.signal,
+        onProgress: (loaded, total) => {
+          total = total || file.size
+          setDownloadProgress({ loaded, total })
+        }
+      })
       const href = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = href
-      a.download = name.split('/').pop() || name
+      const baseName = (name.split('/').pop() || name).replace(/\.[^/.]+$/, '')
+      a.download = `${baseName}.${downloadFormat}`
       document.body.appendChild(a)
       a.click()
       a.remove()
       window.URL.revokeObjectURL(href)
+      toast.success('下載已完成')
     } catch (error: any) {
-      console.error('Download failed:', error)
-      toast.error('下載失敗' + (error.response?.data ? `: ${error.response.data}` : ''))
+      if (error?.name === 'AbortError') {
+        toast.warning('下載已取消')
+      } else {
+        console.error('Download failed:', error)
+        toast.error('下載失敗' + (error.response?.data ? `: ${error.response?.data}` : ''))
+      }
     } finally {
       setIsDownloading(false)
+      setDownloadProgress(null)
+      setDownloadController(null)
     }
   }
 
@@ -153,36 +178,74 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
             <span>{file.path ?? '—'}</span>
           </div>
 
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              className="flex-1"
-              disabled={isDownloading || isRecording || isDeleting}
-              onClick={handleDownload}
-              title={isRecording ? '檔案正在錄製中，無法下載' : undefined}
-              aria-disabled={isRecording || isDownloading || isDeleting}
-            >
-              <span className={isDownloading ? 'animate-ping' : ''} aria-hidden>
-                <DownloadSimpleIcon size={16} />
-              </span>
-              {isRecording ? '錄製中' : isDownloading ? '下載中' : '下載'}
-            </Button>
+          <div className="flex flex-col gap-2 w-full">
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                className={cn("flex-1 relative overflow-hidden", isDownloading ? 'cursor-wait' : '')}
+                disabled={isDownloading || isRecording || isDeleting}
+                onClick={handleDownload}
+                title={isRecording ? '檔案正在錄製中，無法下載' : undefined}
+                aria-disabled={isRecording || isDownloading || isDeleting}
+              >
+                
 
-            <Button
-              size="icon"
-              variant={'destructive-ghost'}
-              className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", (isDeleting || isRecording) ? 'opacity-50 pointer-events-none' : '')}
-              disabled={isDeleting || isRecording}
-              onClick={() => handleDelete(false)}
-              aria-label={`刪除檔案 ${name}`}
-              title="刪除"
-            >
-              <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
-                <TrashSimpleIcon size={16} />
-              </span>
-            </Button>
+                <span className={isDownloading ? 'animate-ping relative z-10' : 'relative z-10'} aria-hidden>
+                  <DownloadSimpleIcon size={16} />
+                </span>
+                <span className="relative z-10">
+                  {isRecording ? '錄製中' : isDownloading ? `下載中${deferredProgress?.total ? ` (${Math.round((deferredProgress.loaded / (deferredProgress.total || 1)) * 100)}%)` : ''}` : '下載'}
+                </span>
+
+                {/* Progress background inside button */}
+                {isDownloading && (
+                  deferredProgress?.loaded ? (
+                    <div className="absolute left-0 top-0 h-full w-full bg-primary/20 z-50">
+                      <div className="h-full bg-muted/20 transition-all" style={{ width: `${Math.max(2, Math.round((deferredProgress.loaded / (deferredProgress.total || 1)) * 100))}%`, transition: 'width 160ms linear' }} />
+                    </div>
+                  ) : (
+                    <div className="absolute left-0 top-0 h-full w-full overflow-hidden z-50">
+                      <div className="progress-indeterminate h-full rounded" />
+                    </div>
+                  )
+                )}
+
+              </Button>
+
+              {!isDownloading && (
+                <Select value={downloadFormat} onValueChange={(v) => setDownloadFormat(v as 'flv' | 'mp4')}>
+                  <SelectTrigger size="sm" className="px-2 py-1 rounded">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent position="popper">
+                    <SelectItem value="flv">FLV</SelectItem>
+                    <SelectItem value="mp4">MP4</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+
+              <Button
+                size="icon"
+                variant="destructive-ghost"
+                className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", (isDeleting || isRecording) ? 'opacity-50 pointer-events-none' : '')}
+                disabled={isDeleting || isRecording || (isDownloading && !downloadController)}
+                onClick={() => { if (isDownloading) { downloadController?.abort(); } else { handleDelete(false); } }}
+                aria-label={isDownloading ? '取消下載' : `刪除檔案 ${name}`}
+                title={isDownloading ? '取消下載' : '刪除'}
+              >
+                {isDownloading ? (
+                  <span aria-hidden>
+                    <XIcon size={16} />
+                  </span>
+                ) : (
+                  <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
+                    <TrashSimpleIcon size={16} />
+                  </span>
+                )}
+              </Button>
           </div>
         </div>
+      </div>
       </div>
     </Card>
   )

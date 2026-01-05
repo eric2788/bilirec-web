@@ -143,15 +143,82 @@ class ApiClient {
     return response.data;
   }
 
-  async downloadFile(path: string): Promise<Blob> {
+  /**
+   * Request a URL and stream the response, reporting progress.
+   * Supports arbitrary HTTP methods and optional request body.
+   */
+  public async requestAsStream(
+    method: string,
+    urlPath: string,
+    options?: { body?: any; onProgress?: (loaded: number, total?: number) => void; signal?: AbortSignal }
+  ): Promise<Blob> {
+    const requestUrl = (this.baseURL ? this.baseURL.replace(/\/$/, "") : "") + urlPath;
+
+    const init: RequestInit = {
+      method,
+      credentials: "include",
+      headers: { "Content-Type": "application/json" }
+    };
+
+    if (options?.signal) init.signal = options.signal;
+
+    // Only set a JSON body for non-GET requests
+    if (method.toUpperCase() !== "GET" && options?.body !== undefined) {
+      init.body = JSON.stringify(options.body);
+    }
+
+    const res = await fetch(requestUrl, init);
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      throw new Error(errText || `HTTP ${res.status}`);
+    }
+
+    const contentLength = res.headers.get("content-length");
+    const total = contentLength ? Number(contentLength) : undefined;
+
+    const reader = res.body?.getReader();
+    if (!reader) throw new Error("Readable stream not supported by the environment");
+
+    const chunks: Uint8Array[] = [];
+    let received = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        chunks.push(value);
+        received += value.length;
+        try {
+          options?.onProgress?.(received, total);
+        } catch (e) {
+          // ignore errors from user-provided progress callback
+        }
+      }
+    }
+
+    // Convert each Uint8Array into an ArrayBuffer of the exact bytes to satisfy type checks
+    const parts = chunks.map((c) => c.buffer.slice(c.byteOffset, c.byteOffset + c.byteLength));
+    // Normalize buffers to concrete ArrayBuffer copies to avoid SharedArrayBuffer in some environments
+    const normalized = parts.map((buf) => {
+      const u = new Uint8Array(buf as ArrayBuffer);
+      return u.slice().buffer;
+    });
+    return new Blob(normalized);
+  }
+
+  async downloadFile(
+    path: string,
+    options?: { format?: string; onProgress?: (loaded: number, total?: number) => void; signal?: AbortSignal }
+  ): Promise<Blob> {
     const encodedPath = path
       .split("/")
       .filter(Boolean)
       .map(encodeURIComponent)
       .join("/");
-    const url = `/files/${encodedPath}`;
-    const response = await this.client.post(url, {}, { responseType: "blob" });
-    return response.data;
+    const url = `/files/${encodedPath}` + (options?.format ? `?format=${encodeURIComponent(options.format)}` : "");
+
+    return this.requestAsStream("POST", url, { body: {}, onProgress: options?.onProgress, signal: options?.signal });
   }
 
   async deleteFiles(paths: string[]): Promise<void> {
