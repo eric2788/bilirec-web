@@ -3,6 +3,7 @@ import { useTheme } from 'next-themes'
 import { LoginView } from '@/components/LoginView'
 import { RecordsView } from '@/components/RecordsView'
 import { FilesView } from '@/components/FilesView'
+import { ConvertsView } from '@/components/ConvertsView'
 import { BottomNav } from '@/components/BottomNav'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { Button } from '@/components/ui/button'
@@ -20,7 +21,7 @@ function App() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [activeTab, setActiveTab] = useState<'records' | 'files'>('records')
+  const [activeTab, setActiveTab] = useState<'records' | 'files' | 'converts'>('records')
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -154,8 +155,10 @@ function App() {
             >
               {activeTab === 'records' ? (
                 <RecordsView />
-              ) : (
+              ) : activeTab === 'files' ? (
                 <FilesView />
+              ) : (
+                <ConvertsView />
               )}
             </motion.div>
           </AnimatePresence>

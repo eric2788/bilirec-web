@@ -2,8 +2,8 @@ import { cn } from '@/lib/utils'
 import { FileIcon } from '@phosphor-icons/react'
 
 type LeftSidebarProps = {
-  activeTab: 'records' | 'files'
-  onTabChange: (t: 'records' | 'files') => void
+  activeTab: 'records' | 'files' | 'converts'
+  onTabChange: (t: 'records' | 'files' | 'converts') => void
 }
 
 export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
@@ -41,6 +41,20 @@ export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
         >
           <span className="shrink-0"><FileIcon size={18} weight="bold" /></span>
           <span>錄製檔案</span>
+        </button>
+
+        <button
+          onClick={() => onTabChange('converts')}
+          aria-pressed={activeTab === 'converts'}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full cursor-pointer',
+            activeTab === 'converts'
+              ? 'text-primary bg-primary/10'
+              : 'text-muted-foreground hover:text-primary hover:bg-secondary/10'
+          )}
+        >
+          <span className="shrink-0"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 3v4M8 3v4m0 10v4m8-4v4" /></svg></span>
+          <span>轉換任務</span>
         </button>
       </nav>
     </aside>

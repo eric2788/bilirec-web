@@ -4,7 +4,8 @@ import type {
   RecordTask,
   RecordFile,
   StartRecordRequest,
-  RecordInfo
+  RecordInfo,
+  ConvertQueue
 } from "./types";
 
 class ApiClient {
@@ -65,7 +66,7 @@ class ApiClient {
     try {
       await this.client.post("/logout");
     } catch (error) {
-      // ignore
+      console.warn("Logout request failed:", error);
     }
   }
 
@@ -209,14 +210,14 @@ class ApiClient {
 
   async downloadFile(
     path: string,
-    options?: { format?: string; onProgress?: (loaded: number, total?: number) => void; signal?: AbortSignal }
+    options?: { onProgress?: (loaded: number, total?: number) => void; signal?: AbortSignal }
   ): Promise<Blob> {
     const encodedPath = path
       .split("/")
       .filter(Boolean)
       .map(encodeURIComponent)
       .join("/");
-    const url = `/files/download/${encodedPath}` + (options?.format ? `?format=${encodeURIComponent(options.format)}` : "");
+    const url = `/files/download/${encodedPath}`;
 
     return this.requestAsStream("GET", url, { body: {}, onProgress: options?.onProgress, signal: options?.signal });
   }
@@ -238,6 +239,16 @@ class ApiClient {
     await this.client.delete(url);
     return;
   }
+
+  async getConvertTasks(): Promise<ConvertQueue[]> {
+    const response = await this.client.get<ConvertQueue[]>("/convert/tasks");
+    return response.data;
+  }
+
+  async deleteConvertTask(taskId: string): Promise<void> {
+    await this.client.delete(`/convert/tasks/${encodeURIComponent(taskId)}`);
+  }
+
 }
 
 export const apiClient = new ApiClient();

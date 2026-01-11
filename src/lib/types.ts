@@ -65,3 +65,12 @@ export interface ApiError {
   message: string
   code?: string
 }
+
+export interface ConvertQueue {
+  task_id: string
+  input_path: string
+  output_path: string
+  input_format: string
+  output_format: string
+  delete_source: boolean
+}
