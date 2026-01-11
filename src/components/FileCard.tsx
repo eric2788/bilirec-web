@@ -20,7 +20,6 @@ interface FileCardProps {
 export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileCardProps) {
   const [isDownloading, setIsDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [downloadFormat, setDownloadFormat] = useState<'flv' | 'mp4'>('flv')
   const [downloadProgress, setDownloadProgress] = useState<{ loaded: number; total?: number } | null>(null)
   const deferredProgress = useDeferredValue(downloadProgress)
   const [downloadController, setDownloadController] = useState<AbortController | null>(null)
@@ -78,7 +77,6 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     try {
       const fullPath = currentPath ? `${currentPath}/${name}` : name
       const blob = await apiClient.downloadFile(fullPath, {
-        format: downloadFormat,
         signal: controller.signal,
         onProgress: (loaded, total) => {
           total = total || file.size
@@ -88,8 +86,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
       const href = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = href
-      const baseName = (name.split('/').pop() || name).replace(/\.[^/.]+$/, '')
-      a.download = `${baseName}.${downloadFormat}`
+      a.download = name
       document.body.appendChild(a)
       a.click()
       a.remove()
@@ -211,19 +208,6 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
                 )}
 
               </Button>
-
-              {!isDownloading && (
-                <Select value={downloadFormat} onValueChange={(v) => setDownloadFormat(v as 'flv' | 'mp4')}>
-                  <SelectTrigger size="sm" className="px-2 py-1 rounded">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent position="popper">
-                    <SelectItem value="flv">FLV</SelectItem>
-                    <SelectItem value="mp4">MP4</SelectItem>
-                  </SelectContent>
-                </Select>
-              )}
-
               <Button
                 size="icon"
                 variant="destructive-ghost"

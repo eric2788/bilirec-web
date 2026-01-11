@@ -8,8 +8,7 @@ import { EmptyState } from './EmptyState'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordTask } from '@/lib/types'
-import { Skeleton } from '@/components/ui/skeleton'
-
+import { LoadingScreen } from './LoadingScreen'
 interface RecordsViewProps {
   onRefresh?: () => void
 }
@@ -116,11 +115,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
 
       <div className="flex-1 overflow-y-auto p-4 pb-20">
         {isLoading ? (
-          <div className="grid gap-4 lg:grid-cols-2">
-            {[1, 2].map((i) => (
-              <Skeleton key={i} className="h-48" />
-            ))}
-          </div>
+          <LoadingScreen />
         ) : tasks.length === 0 ? (
           <EmptyState
             icon={

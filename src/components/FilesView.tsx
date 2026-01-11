@@ -6,8 +6,7 @@ import { CaretLeftIcon } from '@phosphor-icons/react'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordFile } from '@/lib/types'
-import { Skeleton } from '@/components/ui/skeleton'
-
+import { LoadingScreen } from './LoadingScreen'
 export function FilesView() {
   const [files, setFiles] = useState<RecordFile[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -65,11 +64,7 @@ export function FilesView() {
 
       <div className="flex-1 overflow-y-auto p-4 pb-20">
         {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-24" />
-            ))}
-          </div>
+          <LoadingScreen />
         ) : files.length === 0 ? (
           <EmptyState
             icon={
