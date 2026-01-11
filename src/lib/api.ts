@@ -14,7 +14,7 @@ class ApiClient {
 
   // Simple in-memory cache for room info to reduce expensive requests
   private roomInfoCache = new Map<number, { data: any; ts: number }>();
-  private ROOM_INFO_TTL = 60_000; // 60s
+  private ROOM_INFO_TTL = 5 * 60_000; // 5 minutes
 
   constructor() {
     this.client = axios.create({
