@@ -76,22 +76,17 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
 
     try {
       const fullPath = currentPath ? `${currentPath}/${name}` : name
-      const blob = await apiClient.downloadFile(fullPath, {
+      await apiClient.downloadFileToDisk(fullPath, {
         signal: controller.signal,
+        suggestedName: name,
         onProgress: (loaded, total) => {
           total = total || file.size
           setDownloadProgress({ loaded, total })
         }
       })
-      const href = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = href
-      a.download = name
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      window.URL.revokeObjectURL(href)
-      toast.success('下載已完成')
+      // If browser handled the download in a new tab or File System Access API finished writing,
+      // notify the user that the download was initiated/finished.
+      toast.success('下載已啟動或完成（請檢查下載管理員或選擇的儲存位置）')
     } catch (error: any) {
       if (error?.name === 'AbortError') {
         toast.warning('下載已取消')

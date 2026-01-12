@@ -222,6 +222,27 @@ class ApiClient {
     return this.requestAsStream("GET", url, { body: {}, onProgress: options?.onProgress, signal: options?.signal });
   }
 
+  /**
+   * Stream a file directly to disk when the File System Access API is available.
+   * Falls back to opening the download URL in a new tab so the browser download
+   * manager handles the transfer (better for very large files than buffering in memory).
+   */
+  async downloadFileToDisk(
+    path: string,
+    options?: { onProgress?: (loaded: number, total?: number) => void; signal?: AbortSignal; suggestedName?: string }
+  ): Promise<void> {
+    const encodedPath = path
+      .split("/")
+      .filter(Boolean)
+      .map(encodeURIComponent)
+      .join("/");
+    const url = (this.baseURL ? this.baseURL.replace(/\/$/, "") : "") + `/files/download/${encodedPath}`;
+
+    // Delegate to downloader helper which implements: showSaveFilePicker -> StreamSaver -> anchor
+    const { downloadUrlToDisk } = await import("./downloader")
+    return downloadUrlToDisk(url, { suggestedName: options?.suggestedName ?? path.split("/").pop() ?? "", onProgress: options?.onProgress, signal: options?.signal })
+  }
+
   async deleteFiles(paths: string[]): Promise<void> {
     // Swagger: DELETE /files/batch with body = array of paths
     await this.client.delete("/files/batch", { data: paths });
