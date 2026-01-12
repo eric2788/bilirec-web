@@ -8,9 +8,6 @@
       "DOM",
       "DOM.Iterable"
     ],
-    "types": [
-      "wicg-file-system-access"
-    ],
     "module": "ESNext",
     "skipLibCheck": true,
     "strictNullChecks": true,

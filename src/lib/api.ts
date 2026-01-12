@@ -265,6 +265,16 @@ class ApiClient {
     const response = await this.client.get<ConvertQueue[]>("/convert/tasks");
     return response.data;
   }
+  
+  async enqueueConvertTask(path: string, deleteSource: boolean = false): Promise<ConvertQueue> {
+    const encodedPath = path
+      .split("/")
+      .filter(Boolean)
+      .map(encodeURIComponent)
+      .join("/");
+    const response = await this.client.post<ConvertQueue>(`/convert/tasks/${encodedPath}`, {}, { params: { delete: deleteSource } });
+    return response.data;
+  }
 
   async deleteConvertTask(taskId: string): Promise<void> {
     await this.client.delete(`/convert/tasks/${encodeURIComponent(taskId)}`);

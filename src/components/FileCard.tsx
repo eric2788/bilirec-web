@@ -2,7 +2,10 @@ import { useState, useDeferredValue } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' 
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import MoreVerticalIcon from 'lucide-react/dist/esm/icons/more-vertical'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
+import { Checkbox } from '@/components/ui/checkbox'
 import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, XIcon } from '@phosphor-icons/react'
 import { formatFileSize } from '@/lib/utils'
 import type { RecordFile } from '@/lib/types'
@@ -23,22 +26,28 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
   const [downloadProgress, setDownloadProgress] = useState<{ loaded: number; total?: number } | null>(null)
   const deferredProgress = useDeferredValue(downloadProgress)
   const [downloadController, setDownloadController] = useState<AbortController | null>(null)
+  const [isConverting, setIsConverting] = useState(false)
 
   // Normalize incoming file shape and guard against missing data
   const name = typeof file.name === 'string' ? file.name : '未命名'
   const isDir = 'is_dir' in file ? !!(file as any).is_dir : !!(file as any).isDir
   const sizeVal = typeof file.size === 'number' ? file.size : Number((file as any).size) || 0
+  const extension = file.name.split('.').pop()?.toUpperCase()
 
   const isRecording = 'is_recording' in file ? !!(file as any).is_recording : false
 
   const fullPath = currentPath ? `${currentPath}/${name}` : name
 
-  const handleDelete = async (directory = false) => {
-    const confirmed = window.confirm(
-      directory ? `確定要刪除資料夾 "${name}" 及其內容嗎？此操作無法復原。` : `確定要刪除檔案 "${name}" 嗎？此操作無法復原。`
-    )
-    if (!confirmed) return
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [deleteTargetIsDir, setDeleteTargetIsDir] = useState(false)
 
+  const openDeleteDialog = (directory = false) => {
+    setDeleteTargetIsDir(directory)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const performDelete = async (directory = false) => {
+    setIsDeleteDialogOpen(false)
     setIsDeleting(true)
     try {
       if (directory) {
@@ -101,6 +110,40 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     }
   }
 
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
+  const [deleteSourceAfterConvert, setDeleteSourceAfterConvert] = useState(false)
+
+  const openConvertDialog = () => {
+    if (isDir) {
+      toast.error('無法對資料夾進行轉換 MP4')
+      return
+    }
+
+    if (isRecording) {
+      toast.error('檔案正在錄製中，無法轉換 MP4')
+      return
+    }
+
+    // default: do not delete source unless user checks
+    setDeleteSourceAfterConvert(false)
+    setIsConvertDialogOpen(true)
+  }
+
+  const confirmConvert = async () => {
+    setIsConvertDialogOpen(false)
+    setIsConverting(true)
+    try {
+      const fullPath = currentPath ? `${currentPath}/${name}` : name
+      await apiClient.enqueueConvertTask(fullPath, deleteSourceAfterConvert)
+      toast.success('已加入轉換 MP4 佇列')
+    } catch (error: any) {
+      console.error('Enqueue convert failed:', error)
+      toast.error('加入轉換 MP4 佇列失敗' + (error.response?.data ? `: ${error.response.data}` : ''))
+    } finally {
+      setIsConverting(false)
+    }
+  }
+
   if (isDir) {
     return (
       <Card
@@ -124,7 +167,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
               disabled={isDeleting}
               onClick={(e) => {
                 e.stopPropagation()
-                handleDelete(true)
+                openDeleteDialog(true)
               }}
               aria-label={`刪除資料夾 ${name}`}
               title="刪除"
@@ -155,7 +198,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
             </div>
             <div className="flex items-center gap-2">
               <Badge variant="outline" className="shrink-0">
-                {file.name.split('.').pop()?.toUpperCase()}
+                {extension}
               </Badge>
               {isRecording && (
                 <Badge variant="destructive" className="shrink-0">
@@ -180,7 +223,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
                 title={isRecording ? '檔案正在錄製中，無法下載' : undefined}
                 aria-disabled={isRecording || isDownloading || isDeleting}
               >
-                
+
 
                 <span className={isDownloading ? 'animate-ping relative z-10' : 'relative z-10'} aria-hidden>
                   <DownloadSimpleIcon size={16} />
@@ -203,29 +246,113 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
                 )}
 
               </Button>
-              <Button
-                size="icon"
-                variant="destructive-ghost"
-                className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", (isDeleting || isRecording) ? 'opacity-50 pointer-events-none' : '')}
-                disabled={isDeleting || isRecording || (isDownloading && !downloadController)}
-                onClick={() => { if (isDownloading) { downloadController?.abort(); } else { handleDelete(false); } }}
-                aria-label={isDownloading ? '取消下載' : `刪除檔案 ${name}`}
-                title={isDownloading ? '取消下載' : '刪除'}
-              >
-                {isDownloading ? (
-                  <span aria-hidden>
-                    <XIcon size={16} />
-                  </span>
-                ) : (
-                  <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
-                    <TrashSimpleIcon size={16} />
-                  </span>
+
+              {/* Desktop actions: show convert & delete on sm+ */}
+              <div className="hidden sm:flex items-center gap-2">
+                {extension?.toLowerCase() !== 'mp4' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={cn("shrink-0", isConverting ? 'cursor-wait' : '')}
+                    disabled={isConverting || isDownloading || isDeleting || isRecording}
+                    onClick={openConvertDialog}
+                    aria-label={`轉換 MP4 ${name}`}
+                    title={isConverting ? '轉換 MP4 中' : '轉換 MP4'}
+                  >
+                    {isConverting ? '轉換 MP4 中…' : '轉換 MP4'}
+                  </Button>
                 )}
-              </Button>
+                <Button
+                  size="icon"
+                  variant="destructive-ghost"
+                  className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", (isDeleting || isRecording) ? 'opacity-50 pointer-events-none' : '')}
+                  disabled={isDeleting || isRecording || (isDownloading && !downloadController)}
+                  onClick={() => { if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }}
+                  aria-label={isDownloading ? '取消下載' : `刪除檔案 ${name}`}
+                  title={isDownloading ? '取消下載' : '刪除'}
+                >
+                  {isDownloading ? (
+                    <span aria-hidden>
+                      <XIcon size={16} />
+                    </span>
+                  ) : (
+                    <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
+                      <TrashSimpleIcon size={16} />
+                    </span>
+                  )}
+                </Button>
+              </div>
+
+              {/* Mobile: three-dots menu */}
+              <div className="sm:hidden flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", (isDeleting || isRecording) ? 'opacity-50 pointer-events-none' : '')}
+                      disabled={isDeleting || isRecording || (isDownloading && !downloadController)}
+                      aria-label="更多操作"
+                    >
+                      <MoreVerticalIcon className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {extension?.toLowerCase() !== 'mp4' && (
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openConvertDialog(); }} disabled={isConverting || isDownloading || isDeleting || isRecording}>
+                        {isConverting ? '轉換 MP4 中…' : '轉換 MP4'}
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem variant="destructive" onSelect={(e) => { e.preventDefault(); if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }} disabled={isDeleting || isRecording || (isDownloading && !downloadController)}>
+                      {isDownloading ? '取消下載' : '刪除'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+            </div>
+
+            {/* Convert confirmation dialog */}
+            <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>確認轉換 MP4</DialogTitle>
+                  <DialogDescription>是否要將 "{name}" 加入轉換 MP4 佇列？可選擇在轉換完成後刪除原檔。</DialogDescription>
+                </DialogHeader>
+
+                <div className="flex items-center gap-3 mt-2">
+                  <Checkbox checked={deleteSourceAfterConvert} onCheckedChange={(v) => setDeleteSourceAfterConvert(!!v)} />
+                  <div className="flex flex-col">
+                    <span className="text-sm">轉換完成後刪除原檔</span>
+                    <span className="text-xs text-muted-foreground">取消勾選會保留原始檔案</span>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsConvertDialogOpen(false)}>取消</Button>
+                  <Button onClick={confirmConvert} disabled={isConverting}>{isConverting ? '轉換 MP4 中…' : '確定轉換 MP4'}</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Delete confirmation dialog */}
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>確認刪除</DialogTitle>
+                  <DialogDescription>{deleteTargetIsDir ? `確定要刪除資料夾 "${name}" 及其內容嗎？此操作無法復原。` : `確定要刪除檔案 "${name}" 嗎？此操作無法復原。`}</DialogDescription>
+                </DialogHeader>
+
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsDeleteDialogOpen(false)}>取消</Button>
+                  <Button variant="destructive" onClick={() => performDelete(deleteTargetIsDir)} disabled={isDeleting}>{isDeleting ? '刪除中…' : '確定刪除'}</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
           </div>
         </div>
       </div>
-      </div>
     </Card>
   )
-}
+} 
