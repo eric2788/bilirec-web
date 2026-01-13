@@ -48,6 +48,13 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
   }
 
   const performDelete = async (directory = false) => {
+    // Guard: prevent deleting while file is currently recording
+    if (isRecording) {
+      setIsDeleteDialogOpen(false)
+      toast.error('檔案正在錄製中，無法刪除')
+      return
+    }
+
     setIsDeleteDialogOpen(false)
     setIsDeleting(true)
     try {
@@ -300,25 +307,27 @@ const handleShare = async () => {
                     {isConverting ? '轉換 MP4 中…' : '轉換 MP4'}
                   </Button>
                 )}
-                <Button
-                  size="icon"
-                  variant="destructive-ghost"
-                  className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", (isDeleting || isRecording) ? 'opacity-50 pointer-events-none' : '')}
-                  disabled={isDeleting || isRecording || (isDownloading && !downloadController)}
-                  onClick={() => { if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }}
-                  aria-label={isDownloading ? '取消下載' : `刪除檔案 ${name}`}
-                  title={isDownloading ? '取消下載' : '刪除'}
-                >
-                  {isDownloading ? (
-                    <span aria-hidden>
-                      <XIcon size={16} />
-                    </span>
-                  ) : (
-                    <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
-                      <TrashSimpleIcon size={16} />
-                    </span>
-                  )}
-                </Button>
+                {!isRecording && (
+                  <Button
+                    size="icon"
+                    variant="destructive-ghost"
+                    className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", isDeleting ? 'opacity-50 pointer-events-none' : '')}
+                    disabled={isDeleting || (isDownloading && !downloadController)}
+                    onClick={() => { if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }}
+                    aria-label={isDownloading ? '取消下載' : `刪除檔案 ${name}`}
+                    title={isDownloading ? '取消下載' : '刪除'}
+                  >
+                    {isDownloading ? (
+                      <span aria-hidden>
+                        <XIcon size={16} />
+                      </span>
+                    ) : (
+                      <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
+                        <TrashSimpleIcon size={16} />
+                      </span>
+                    )}
+                  </Button>
+                )}
               </div>
 
               {/* Mobile: three-dots menu */}
@@ -347,9 +356,11 @@ const handleShare = async () => {
                         {isConverting ? '轉換 MP4 中…' : '轉換 MP4'}
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem variant="destructive" onSelect={(e) => { e.preventDefault(); if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }} disabled={isDeleting || isRecording || (isDownloading && !downloadController)}>
-                      {isDownloading ? '取消下載' : '刪除'}
-                    </DropdownMenuItem>
+                    {!isRecording && (
+                      <DropdownMenuItem variant="destructive" onSelect={(e) => { e.preventDefault(); if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }} disabled={isDeleting || (isDownloading && !downloadController)}>
+                        {isDownloading ? '取消下載' : '刪除'}
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
