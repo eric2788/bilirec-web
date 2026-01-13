@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { SwapIcon } from '@phosphor-icons/react'
 
 interface BottomNavProps {
   activeTab: 'records' | 'files' | 'converts'
@@ -44,10 +45,9 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             activeTab === 'converts' ? 'text-primary' : 'text-muted-foreground'
           )}
         >
-          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 3v4m10-4v4" />
-          </svg>
+          <span className="w-6 h-6 flex items-center justify-center">
+            <SwapIcon size={18} weight="bold" />
+          </span>
           <span className="text-xs font-medium">轉換任務</span>
         </button>
       </div>

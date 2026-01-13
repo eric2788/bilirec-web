@@ -191,8 +191,9 @@ body {
 }
 
 
-/* Slight hover background for header buttons in dark mode */
-[data-appearance="dark"] .rounded-md.p-1:hover {
+/* Slight hover background for header buttons in dark mode (only target actual buttons to avoid affecting menu containers) */
+[data-appearance="dark"] button.rounded-md.p-1:hover,
+[data-appearance="dark"] [role="button"].rounded-md.p-1:hover {
   background-color: rgba(255,255,255,0.03);
 }
 

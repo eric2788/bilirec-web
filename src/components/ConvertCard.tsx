@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import MoreVerticalIcon from 'lucide-react/dist/esm/icons/more-vertical'
-import { FileArrowDownIcon, TrashSimpleIcon } from '@phosphor-icons/react' 
+import { TrashSimpleIcon, SwapIcon } from '@phosphor-icons/react'
 import type { ConvertQueue } from '@/lib/types'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
@@ -38,9 +38,8 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
     <Card className="p-4 convert-card transition-all hover:shadow-lg relative">
       <div className="flex items-start gap-3">
         <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
-          <FileArrowDownIcon size={20} />
+          <SwapIcon size={20} /> 
         </div>
-
         {/* Mobile: three-dots at top-right */}
         <div className="absolute right-3 top-3 sm:hidden">
           <DropdownMenu>
@@ -50,7 +49,7 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem variant="destructive" onSelect={(e) => { e.preventDefault(); handleCancel(); }} disabled={isCancelling}>
+              <DropdownMenuItem variant="destructive" onSelect={() => { handleCancel(); }} disabled={isCancelling}>
                 取消轉換
               </DropdownMenuItem>
             </DropdownMenuContent>

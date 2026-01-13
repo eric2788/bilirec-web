@@ -5,6 +5,7 @@ import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { ConvertQueue } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
+import { SwapIcon } from '@phosphor-icons/react'
 export function ConvertsView() {
   const [tasks, setTasks] = useState<ConvertQueue[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -42,10 +43,9 @@ export function ConvertsView() {
         ) : tasks.length === 0 ? (
           <EmptyState
             icon={(
-              <svg className="w-10 h-10 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 13V7a2 2 0 00-2-2H6a2 2 0 00-2 2v6" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 21v-4a2 2 0 00-2-2H10a2 2 0 00-2 2v4" />
-              </svg>
+              <span className="text-muted-foreground">
+                <SwapIcon size={40} />
+              </span>
             )}
             title="沒有正在轉換的任務"
             description="當有轉換任務執行時，會在此處顯示"

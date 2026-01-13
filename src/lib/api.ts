@@ -278,13 +278,15 @@ class ApiClient {
     return response.data;
   }
   
-  async enqueueConvertTask(path: string, deleteSource: boolean = false): Promise<ConvertQueue> {
+  async enqueueConvertTask(path: string, deleteSource: boolean = false, format?: string): Promise<ConvertQueue> {
     const encodedPath = path
       .split("/")
       .filter(Boolean)
       .map(encodeURIComponent)
       .join("/");
-    const response = await this.client.post<ConvertQueue>(`/convert/tasks/${encodedPath}`, {}, { params: { delete: deleteSource } });
+    const params: any = { delete: deleteSource };
+    if (format) params.format = format;
+    const response = await this.client.post<ConvertQueue>(`/convert/tasks/${encodedPath}`, {}, { params });
     return response.data;
   }
 

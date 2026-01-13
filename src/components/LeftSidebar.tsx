@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { FileIcon } from '@phosphor-icons/react'
+import { FileIcon, SwapIcon } from '@phosphor-icons/react'
 
 type LeftSidebarProps = {
   activeTab: 'records' | 'files' | 'converts'
@@ -53,7 +53,7 @@ export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
               : 'text-muted-foreground hover:text-primary hover:bg-secondary/10'
           )}
         >
-          <span className="shrink-0"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 3v4M8 3v4m0 10v4m8-4v4" /></svg></span>
+          <span className="shrink-0"><SwapIcon size={18} weight="bold" /></span>
           <span>轉換任務</span>
         </button>
       </nav>

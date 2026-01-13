@@ -6,7 +6,8 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import MoreVerticalIcon from 'lucide-react/dist/esm/icons/more-vertical'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, XIcon, ShareNetworkIcon } from '@phosphor-icons/react'
+import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, XIcon, ShareNetworkIcon, SwapIcon } from '@phosphor-icons/react'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' 
 import { formatFileSize } from '@/lib/utils'
 import type { RecordFile } from '@/lib/types'
 import { apiClient } from '@/lib/api'
@@ -120,20 +121,22 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
 
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
   const [deleteSourceAfterConvert, setDeleteSourceAfterConvert] = useState(false)
+  const [convertFormat, setConvertFormat] = useState<string>('mp4')
 
   const openConvertDialog = () => {
     if (isDir) {
-      toast.error('無法對資料夾進行轉換 MP4')
+      toast.error('無法轉換')
       return
     }
 
     if (isRecording) {
-      toast.error('檔案正在錄製中，無法轉換 MP4')
+      toast.error('檔案正在錄製中，無法轉換')
       return
     }
 
     // default: do not delete source unless user checks
     setDeleteSourceAfterConvert(false)
+    setConvertFormat('mp4')
     setIsConvertDialogOpen(true)
   }
 
@@ -142,11 +145,11 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     setIsConverting(true)
     try {
       const fullPath = currentPath ? `${currentPath}/${name}` : name
-      await apiClient.enqueueConvertTask(fullPath, deleteSourceAfterConvert)
-      toast.success('已加入轉換 MP4 佇列')
+      await apiClient.enqueueConvertTask(fullPath, deleteSourceAfterConvert, convertFormat)
+      toast.success('已加入轉換佇列')
     } catch (error: any) {
       console.error('Enqueue convert failed:', error)
-      toast.error('加入轉換 MP4 佇列失敗' + (error.response?.data ? `: ${error.response.data}` : ''))
+      toast.error('加入轉換佇列失敗' + (error.response?.data ? `: ${error.response?.data}` : ''))
     } finally {
       setIsConverting(false)
     }
@@ -277,6 +280,21 @@ const handleShare = async () => {
 
               {/* Desktop actions: show share, convert & delete on sm+ */}
               <div className="hidden sm:flex items-center gap-2">
+                {extension?.toLowerCase() !== 'mp4' && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center shrink-0", isConverting ? 'cursor-wait' : '')}
+                    disabled={isConverting || isDownloading || isDeleting || isRecording}
+                    onClick={openConvertDialog}
+                    aria-label={`轉換 ${name}`}
+                    title={isConverting ? '轉換中…' : '轉換'}
+                  >
+                    <span className={isConverting ? 'animate-ping' : ''} aria-hidden>
+                      <SwapIcon size={16} />
+                    </span>
+                  </Button>
+                )}
                 {/* Hide share button while recording or downloading */}
                 {!isRecording && !isDownloading && (
                   <Button
@@ -291,20 +309,6 @@ const handleShare = async () => {
                     <span className={isSharing ? 'animate-ping' : ''} aria-hidden>
                       <ShareNetworkIcon size={16} />
                     </span>
-                  </Button>
-                )}
-
-                {extension?.toLowerCase() !== 'mp4' && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className={cn("shrink-0", isConverting ? 'cursor-wait' : '')}
-                    disabled={isConverting || isDownloading || isDeleting || isRecording}
-                    onClick={openConvertDialog}
-                    aria-label={`轉換 MP4 ${name}`}
-                    title={isConverting ? '轉換 MP4 中' : '轉換 MP4'}
-                  >
-                    {isConverting ? '轉換 MP4 中…' : '轉換 MP4'}
                   </Button>
                 )}
                 {!isRecording && (
@@ -345,19 +349,19 @@ const handleShare = async () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                      {/* Show share item only when not recording or downloading */}
+                    {/* Show share item only when not recording or downloading */}
                     {!isRecording && !isDownloading && (
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleShare(); }} disabled={isSharing || isDeleting}>
+                      <DropdownMenuItem onSelect={() => { handleShare(); }} disabled={isSharing || isDeleting}>
                         {isSharing ? '產生分享連結中…' : '分享'}
                       </DropdownMenuItem>
                     )}
                     {extension?.toLowerCase() !== 'mp4' && (
-                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openConvertDialog(); }} disabled={isConverting || isDownloading || isDeleting || isRecording}>
-                        {isConverting ? '轉換 MP4 中…' : '轉換 MP4'}
+                      <DropdownMenuItem onSelect={() => { openConvertDialog(); }} disabled={isConverting || isDownloading || isDeleting || isRecording}>
+                        {isConverting ? '轉換中…' : '轉換'}
                       </DropdownMenuItem>
                     )}
                     {!isRecording && (
-                      <DropdownMenuItem variant="destructive" onSelect={(e) => { e.preventDefault(); if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }} disabled={isDeleting || (isDownloading && !downloadController)}>
+                      <DropdownMenuItem variant="destructive" onSelect={() => { if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }} disabled={isDeleting || (isDownloading && !downloadController)}>
                         {isDownloading ? '取消下載' : '刪除'}
                       </DropdownMenuItem>
                     )}
@@ -371,11 +375,26 @@ const handleShare = async () => {
             <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>確認轉換 MP4</DialogTitle>
-                  <DialogDescription>是否要將 "{name}" 加入轉換 MP4 佇列？可選擇在轉換完成後刪除原檔。</DialogDescription>
+                  <DialogTitle>確認轉換</DialogTitle>
+                  <DialogDescription>是否要將 "{name}" 加入轉換佇列（輸出格式: {convertFormat.toUpperCase()}）？可選擇在轉換完成後刪除原檔。</DialogDescription>
                 </DialogHeader>
 
-                <div className="flex items-center gap-3 mt-2">
+                <div className="mt-3">
+                  <span className="text-sm">輸出格式</span>
+                  <div className="mt-2">
+                    <Select value={convertFormat} onValueChange={(v) => setConvertFormat(v)}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="MP4" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mp4">MP4</SelectItem>
+                        {/* <SelectItem value="mkv" disabled>MKV（即將支援）</SelectItem> */}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 mt-4">
                   <Checkbox checked={deleteSourceAfterConvert} onCheckedChange={(v) => setDeleteSourceAfterConvert(!!v)} />
                   <div className="flex flex-col">
                     <span className="text-sm">轉換完成後刪除原檔</span>
@@ -385,7 +404,7 @@ const handleShare = async () => {
 
                 <DialogFooter>
                   <Button variant="ghost" onClick={() => setIsConvertDialogOpen(false)}>取消</Button>
-                  <Button onClick={confirmConvert} disabled={isConverting}>{isConverting ? '轉換 MP4 中…' : '確定轉換 MP4'}</Button>
+                  <Button onClick={confirmConvert} disabled={isConverting}>{isConverting ? `轉換 ${convertFormat.toUpperCase()} 中…` : `確定轉換 ${convertFormat.toUpperCase()}`}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
