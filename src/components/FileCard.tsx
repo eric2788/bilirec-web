@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import MoreVerticalIcon from 'lucide-react/dist/esm/icons/more-vertical'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, XIcon } from '@phosphor-icons/react'
+import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, XIcon, ShareNetworkIcon } from '@phosphor-icons/react'
 import { formatFileSize } from '@/lib/utils'
 import type { RecordFile } from '@/lib/types'
 import { apiClient } from '@/lib/api'
@@ -27,6 +27,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
   const deferredProgress = useDeferredValue(downloadProgress)
   const [downloadController, setDownloadController] = useState<AbortController | null>(null)
   const [isConverting, setIsConverting] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
 
   // Normalize incoming file shape and guard against missing data
   const name = typeof file.name === 'string' ? file.name : '未命名'
@@ -143,7 +144,29 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
       setIsConverting(false)
     }
   }
+const handleShare = async () => {
+    if (isRecording) {
+      toast.error('檔案正在錄製中，無法分享')
+      return
+    }
 
+    setIsSharing(true)
+    try {
+      const fullPath = currentPath ? `${currentPath}/${name}` : name
+      const shareInfo = await apiClient.shareFile(fullPath)
+      
+      // Copy URL to clipboard
+      await navigator.clipboard.writeText(shareInfo.url)
+      toast.success(`分享連結已複製到剪貼簿（有效期 ${shareInfo.expires_in} 秒）`)
+    } catch (error: any) {
+      console.error('Share failed:', error)
+      toast.error('產生分享連結失敗' + (error.response?.data ? `: ${error.response.data}` : ''))
+    } finally {
+      setIsSharing(false)
+    }
+  }
+
+  
   if (isDir) {
     return (
       <Card
@@ -223,8 +246,6 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
                 title={isRecording ? '檔案正在錄製中，無法下載' : undefined}
                 aria-disabled={isRecording || isDownloading || isDeleting}
               >
-
-
                 <span className={isDownloading ? 'animate-ping relative z-10' : 'relative z-10'} aria-hidden>
                   <DownloadSimpleIcon size={16} />
                 </span>
@@ -247,8 +268,25 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
 
               </Button>
 
-              {/* Desktop actions: show convert & delete on sm+ */}
+              {/* Desktop actions: show share, convert & delete on sm+ */}
               <div className="hidden sm:flex items-center gap-2">
+                {/* Hide share button while recording or downloading */}
+                {!isRecording && !isDownloading && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", isSharing ? 'cursor-wait' : '')}
+                    disabled={isSharing || isDeleting}
+                    onClick={handleShare}
+                    aria-label={`分享檔案 ${name}`}
+                    title={isSharing ? '產生分享連結中' : '分享'}
+                  >
+                    <span className={isSharing ? 'animate-ping' : ''} aria-hidden>
+                      <ShareNetworkIcon size={16} />
+                    </span>
+                  </Button>
+                )}
+
                 {extension?.toLowerCase() !== 'mp4' && (
                   <Button
                     size="sm"
@@ -298,6 +336,12 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                      {/* Show share item only when not recording or downloading */}
+                    {!isRecording && !isDownloading && (
+                      <DropdownMenuItem onSelect={(e) => { e.preventDefault(); handleShare(); }} disabled={isSharing || isDeleting}>
+                        {isSharing ? '產生分享連結中…' : '分享'}
+                      </DropdownMenuItem>
+                    )}
                     {extension?.toLowerCase() !== 'mp4' && (
                       <DropdownMenuItem onSelect={(e) => { e.preventDefault(); openConvertDialog(); }} disabled={isConverting || isDownloading || isDeleting || isRecording}>
                         {isConverting ? '轉換 MP4 中…' : '轉換 MP4'}

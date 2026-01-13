@@ -5,7 +5,8 @@ import type {
   RecordFile,
   StartRecordRequest,
   RecordInfo,
-  ConvertQueue
+  ConvertQueue,
+  ShareFileInfo
 } from "./types";
 
 class ApiClient {
@@ -247,6 +248,17 @@ class ApiClient {
     // Swagger: DELETE /files/batch with body = array of paths
     await this.client.delete("/files/batch", { data: paths });
     return;
+  }
+
+  async shareFile(path: string): Promise<ShareFileInfo> {
+    const encodedPath = path
+      .split("/")
+      .filter(Boolean)
+      .map(encodeURIComponent)
+      .join("/");
+    const url = `/files/presigned/${encodedPath}`;
+    const response = await this.client.post<ShareFileInfo>(url);
+    return response.data;
   }
 
   async deleteDir(path: string): Promise<void> {
