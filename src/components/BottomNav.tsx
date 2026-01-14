@@ -9,7 +9,7 @@ interface BottomNavProps {
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border safe-area-bottom z-50 md:hidden select-none"
+      className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border safe-area-bottom z-50 lg:hidden select-none"
       style={{ touchAction: 'none', userSelect: 'none', overscrollBehavior: 'contain' }}
     >
       <div className="flex items-center justify-around h-16">

@@ -8,7 +8,7 @@ type LeftSidebarProps = {
 
 export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
   return (
-    <aside className="hidden md:flex md:flex-col w-56 h-full p-4 border-r border-border bg-sidebar/95 text-sidebar-foreground">
+    <aside className="hidden lg:flex lg:flex-col w-56 h-full p-4 border-r border-border bg-sidebar/95 text-sidebar-foreground">
       <nav className="flex flex-col gap-2 mt-2">
         <button
           onClick={() => onTabChange('records')}

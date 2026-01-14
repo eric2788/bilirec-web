@@ -13,8 +13,9 @@
   --background: #E9F0F5;
   --foreground: #0E171E;
 
-  --card: #19232A;
-  --card-foreground: #E9F0F5;
+  /* Light theme: cards should be light with dark text */
+  --card: #FFFFFF;
+  --card-foreground: #0E171E;
   
   --popover: #FCFCFC;
   --popover-foreground: #0E171E;

@@ -4,8 +4,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import MoreVerticalIcon from 'lucide-react/dist/esm/icons/more-vertical'
-import { TrashSimpleIcon, SwapIcon } from '@phosphor-icons/react'
-import type { ConvertQueue } from '@/lib/types'
+import { XIcon, SwapIcon } from '@phosphor-icons/react'
+import type { ConvertQueue } from '@/lib/types' 
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 
@@ -16,6 +16,8 @@ interface ConvertCardProps {
 
 export function ConvertCard({ task, onCancel }: ConvertCardProps) {
   const [isCancelling, setIsCancelling] = useState(false)
+
+  const baseInput = task.input_path.split(/[\\\/]/).pop() || task.input_path
 
   const handleCancel = async () => {
     const ok = window.confirm(`確定要取消轉換任務 ${task.task_id} 嗎？`)
@@ -59,18 +61,16 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
             <div className="min-w-0">
-              <p className="font-semibold text-card-foreground wrap-break-word">{task.task_id}</p>
-              <p className="text-sm text-muted-foreground wrap-break-word sm:truncate">{task.input_path} → {task.output_path}</p>
+              <p className="font-semibold text-lg text-card-foreground wrap-break-word">{baseInput}</p>
+              <p className="text-sm text-muted-foreground wrap-break-word sm:truncate">{task.input_path}</p>
             </div>
-
             <div className="flex items-center gap-2 flex-wrap mt-2 sm:mt-0">
-              <Badge variant="outline" className="shrink-0">{task.input_format.toUpperCase()} → {task.output_format.toUpperCase()}</Badge>
+              <Badge variant="outline" className="shrink-0 text-sm sm:order-2 sm:text-xs ring-[0.2px] ring-gray-900 dark:ring-gray-200">{task.input_format.toUpperCase()} → {task.output_format.toUpperCase()}</Badge>
               {task.delete_source && (
-                <Badge variant="destructive" className="shrink-0">刪除來源</Badge>
-              )}
-
+                <Badge variant="destructive" className="shrink-0 text-sm sm:order-1 sm:text-xs border border-transparent">轉後刪源</Badge>
+              )} 
               {/* Desktop: show cancel button */}
-              <div className="hidden sm:inline-flex">
+              <div className="hidden sm:inline-flex order-3">
                 <Button
                   size="icon"
                   variant="destructive-ghost"
@@ -80,7 +80,7 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
                   aria-label={`取消轉換 ${task.task_id}`}
                   title="取消"
                 >
-                  <TrashSimpleIcon size={16} />
+                  <XIcon size={16} />
                 </Button>
               </div>
 
@@ -88,10 +88,7 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
             </div>
           </div>
 
-          <div className="mt-2 text-sm text-muted-foreground break-all">
-            <div>輸入: <span className="font-mono">{task.input_path}</span></div>
-            <div>輸出: <span className="font-mono">{task.output_path}</span></div>
-          </div>
+
         </div>
       </div>
     </Card>
