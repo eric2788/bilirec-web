@@ -178,19 +178,24 @@ const handleShare = async () => {
 
   
   if (isDir) {
+    const path = currentPath ? `${currentPath}/${name}` : name
     return (
-      <Card
-        className="p-4 file-card transition-all hover:shadow-lg cursor-pointer active:scale-[0.98]"
-        onClick={() => onNavigate?.(currentPath ? `${currentPath}/${name}` : name)}
-      >
+      <Card className="p-4 file-card transition-all hover:shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
-            <FolderIcon weight="fill" size={24} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="font-semibold text-card-foreground file-name truncate">{name}</p>
-            <p className="text-sm text-muted-foreground">資料夾</p>
-          </div>
+          <button
+            className="flex items-center gap-3 flex-1 min-w-0 text-left p-0 mr-2 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); onNavigate?.(path) }}
+            aria-label={`打開資料夾 ${name}`}
+            title="打開資料夾"
+          >
+            <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
+              <FolderIcon weight="fill" size={24} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-card-foreground file-name truncate">{name}</p>
+              <p className="text-sm text-muted-foreground">資料夾</p>
+            </div>
+          </button>
 
           <div className="flex items-center gap-2">
             <Button
@@ -211,6 +216,21 @@ const handleShare = async () => {
             </Button>
           </div>
         </div>
+
+        {/* Delete confirmation dialog for folders */}
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <DialogContent onClick={(e) => e.stopPropagation()}>
+            <DialogHeader>
+              <DialogTitle>確認刪除</DialogTitle>
+              <DialogDescription>{deleteTargetIsDir ? `確定要刪除資料夾 "${name}" 及其內容嗎？此操作無法復原。` : `確定要刪除檔案 "${name}" 嗎？此操作無法復原。`}</DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter>
+              <Button variant="ghost" onClick={(e) => { e.stopPropagation(); setIsDeleteDialogOpen(false) }}>取消</Button>
+              <Button variant="destructive" onClick={(e) => { e.stopPropagation(); performDelete(deleteTargetIsDir) }} disabled={isDeleting}>{isDeleting ? '刪除中…' : '確定刪除'}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </Card>
     )
   }
