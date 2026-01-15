@@ -1,4 +1,4 @@
-import { useState, useDeferredValue } from 'react'
+import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import MoreVerticalIcon from 'lucide-react/dist/esm/icons/more-vertical'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, XIcon, ShareNetworkIcon, SwapIcon } from '@phosphor-icons/react'
+import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, ShareNetworkIcon, SwapIcon } from '@phosphor-icons/react'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' 
 import { formatFileSize } from '@/lib/utils'
 import type { RecordFile } from '@/lib/types'
@@ -24,9 +24,6 @@ interface FileCardProps {
 export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileCardProps) {
   const [isDownloading, setIsDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [downloadProgress, setDownloadProgress] = useState<{ loaded: number; total?: number } | null>(null)
-  const deferredProgress = useDeferredValue(downloadProgress)
-  const [downloadController, setDownloadController] = useState<AbortController | null>(null)
   const [isConverting, setIsConverting] = useState(false)
   const [isSharing, setIsSharing] = useState(false)
 
@@ -87,35 +84,21 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     }
 
     setIsDownloading(true)
-    setDownloadProgress(null)
-
-    const controller = new AbortController()
-    setDownloadController(controller)
 
     try {
       const fullPath = currentPath ? `${currentPath}/${name}` : name
-      await apiClient.downloadFileToDisk(fullPath, {
-        signal: controller.signal,
-        suggestedName: name,
-        onProgress: (loaded, total) => {
-          total = total || file.size
-          setDownloadProgress({ loaded, total })
-        }
-      })
-      // If browser handled the download in a new tab or File System Access API finished writing,
-      // notify the user that the download was initiated/finished.
-      toast.success('下載已啟動或完成（請檢查下載管理員或選擇的儲存位置）')
+      await apiClient.downloadFile(fullPath, { suggestedName: name })
+      // Let the browser handle the download/navigation
+      toast.info('正在下載...')
     } catch (error: any) {
+      console.error('Download failed:', error)
       if (error?.name === 'AbortError') {
         toast.warning('下載已取消')
       } else {
-        console.error('Download failed:', error)
-        toast.error('下載失敗' + (error.response?.data ? `: ${error.response?.data}` : ''))
+        toast.error('下載失敗' + (error.response?.data ? `: ${error.response?.data}` : error?.message ? `: ${error.message}` : ''))
       }
     } finally {
       setIsDownloading(false)
-      setDownloadProgress(null)
-      setDownloadController(null)
     }
   }
 
@@ -280,21 +263,8 @@ const handleShare = async () => {
                   <DownloadSimpleIcon size={16} />
                 </span>
                 <span className="relative z-10">
-                  {isRecording ? '錄製中' : isDownloading ? `下載中${deferredProgress?.total ? ` (${Math.round((deferredProgress.loaded / (deferredProgress.total || 1)) * 100)}%)` : ''}` : '下載'}
+                  {isRecording ? '錄製中' : isDownloading ? '下載中…' : '下載'}
                 </span>
-
-                {/* Progress background inside button */}
-                {isDownloading && (
-                  deferredProgress?.loaded ? (
-                    <div className="absolute left-0 top-0 h-full w-full bg-primary/20 z-50">
-                      <div className="h-full bg-muted/20 transition-all" style={{ width: `${Math.max(2, Math.round((deferredProgress.loaded / (deferredProgress.total || 1)) * 100))}%`, transition: 'width 160ms linear' }} />
-                    </div>
-                  ) : (
-                    <div className="absolute left-0 top-0 h-full w-full overflow-hidden z-50">
-                      <div className="progress-indeterminate h-full rounded" />
-                    </div>
-                  )
-                )}
 
               </Button>
 
@@ -336,22 +306,16 @@ const handleShare = async () => {
                     size="icon"
                     variant="destructive-ghost"
                     className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", isDeleting ? 'opacity-50 pointer-events-none' : '')}
-                    disabled={isDeleting || (isDownloading && !downloadController)}
-                    onClick={() => { if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }}
-                    aria-label={isDownloading ? '取消下載' : `刪除檔案 ${name}`}
-                    title={isDownloading ? '取消下載' : '刪除'}
+                    disabled={isDeleting || isDownloading}
+                    onClick={() => { if (!isDownloading) { openDeleteDialog(false); } }}
+                    aria-label={isDownloading ? '下載中' : `刪除檔案 ${name}`}
+                    title={isDownloading ? '下載中' : '刪除'}
                   >
-                    {isDownloading ? (
-                      <span aria-hidden>
-                        <XIcon size={16} />
-                      </span>
-                    ) : (
-                      <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
-                        <TrashSimpleIcon size={16} />
-                      </span>
-                    )}
+                    <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
+                      <TrashSimpleIcon size={16} />
+                    </span>
                   </Button>
-                )}
+                )} 
               </div>
 
               {/* Mobile: three-dots menu */}
@@ -362,7 +326,7 @@ const handleShare = async () => {
                       size="icon"
                       variant="ghost"
                       className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", (isDeleting || isRecording) ? 'opacity-50 pointer-events-none' : '')}
-                      disabled={isDeleting || isRecording || (isDownloading && !downloadController)}
+                      disabled={isDeleting || isRecording || isDownloading}
                       aria-label="更多操作"
                     >
                       <MoreVerticalIcon className="size-4" />
@@ -381,8 +345,8 @@ const handleShare = async () => {
                       </DropdownMenuItem>
                     )}
                     {!isRecording && (
-                      <DropdownMenuItem variant="destructive" onSelect={() => { if (isDownloading) { downloadController?.abort(); } else { openDeleteDialog(false); } }} disabled={isDeleting || (isDownloading && !downloadController)}>
-                        {isDownloading ? '取消下載' : '刪除'}
+                      <DropdownMenuItem variant="destructive" onSelect={() => { if (!isDownloading) { openDeleteDialog(false); } }} disabled={isDeleting || isDownloading}>
+                        刪除
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
