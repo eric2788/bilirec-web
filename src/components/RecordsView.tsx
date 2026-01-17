@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -19,8 +19,19 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
   const [roomId, setRoomId] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const scrollPositionRef = useRef(0)
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (isInitial = false) => {
+    const scrollContainer = scrollContainerRef.current
+    if (scrollContainer && !isInitial) {
+      scrollPositionRef.current = scrollContainer.scrollTop
+    }
+    
+    if (isInitial) {
+      setIsLoading(true)
+    }
+    
     try {
       const data = await apiClient.getRecordTasks()
       setTasks(data)
@@ -33,10 +44,16 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
   }
 
   useEffect(() => {
-    fetchTasks()
-    const interval = setInterval(fetchTasks, 5000)
+    fetchTasks(true)
+    const interval = setInterval(() => fetchTasks(false), 5000)
     return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    if (scrollContainerRef.current && scrollPositionRef.current > 0) {
+      scrollContainerRef.current.scrollTop = scrollPositionRef.current
+    }
+  }, [tasks])
 
   const handleAddRecord = async () => {
     const id = parseInt(roomId.trim())
@@ -113,7 +130,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 pb-20">
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 pb-20">
         {isLoading ? (
           <LoadingScreen />
         ) : tasks.length === 0 ? (
