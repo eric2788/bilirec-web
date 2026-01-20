@@ -53,10 +53,10 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
       <div className="flex flex-col gap-3">
         <div className="relative">
           <div className="flex flex-col sm:flex-row items-start gap-3">
-            {task.roomInfo?.user_cover ? (
+            {task.roomInfo?.cover ? (
               <div className="w-full sm:w-40 sm:h-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
                 <img
-                  src={task.roomInfo.user_cover}
+                  src={task.roomInfo.cover}
                   alt={task.roomInfo.title ?? task.roomInfo.uid.toString()}
                   referrerPolicy="no-referrer"
                   className="w-full object-cover"
@@ -72,7 +72,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-card-foreground record-title truncate">
-                    {`直播間 ${task.roomInfo?.room_id}`}
+                    { task.roomInfo?.uname ?? `直播間 ${task.roomInfo?.room_id}`}
                   </p>
                   <p className="text-sm text-muted-foreground truncate">
                     {task.roomInfo?.title || '載入中...'}

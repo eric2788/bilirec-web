@@ -4,24 +4,30 @@ export interface LoginRequest {
 }
 
 export interface RoomInfo {
-  uid: number
   room_id: number
-  short_id: number
+  uid: number
+  area_id: number
+  live_status: number
+  live_url: string
+  parent_area_id: number
+  title: string
+  parent_area_name: string
+  area_name: string
+  live_time: string
+  description: string
+  tags: string
   attention: number
   online: number
-  is_portrait: boolean
-  description: string
-  live_status: number
-  area_id: number
-  parent_area_id: number
-  parent_area_name: string
-  old_area_id: number
+  short_id: number
+  uname: string
+  cover: string
   background: string
-  title: string
-  user_cover: string
-  live_time: string
-  tags: string
-  area_name: string
+  join_slide: number
+  live_id: number
+  live_id_str: string
+  lock_status: number
+  hidden_status: number
+  is_encrypted: boolean
 }
 
 export interface RecordTask {
