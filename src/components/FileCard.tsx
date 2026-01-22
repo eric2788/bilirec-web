@@ -175,7 +175,7 @@ const handleShare = async () => {
               <FolderIcon weight="fill" size={24} />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-card-foreground file-name truncate">{name}</p>
+              <p className="font-semibold text-card-foreground file-name">{name}</p>
               <p className="text-sm text-muted-foreground">資料夾</p>
             </div>
           </button>

@@ -176,6 +176,10 @@ body {
 .file-card .file-name {
   /* make file names dark gray in light theme for good contrast without pure black */
   color: #333333;
+  /* Allow proper text wrapping for long filenames */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 [data-appearance="dark"] .file-card {
@@ -189,6 +193,10 @@ body {
 /* Ensure file-name is readable in dark mode as well */
 [data-appearance="dark"] .file-card .file-name {
   color: var(--card-foreground);
+  /* Allow proper text wrapping for long filenames */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 
