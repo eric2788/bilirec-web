@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { ConvertCard } from './ConvertCard'
 import { EmptyState } from './EmptyState'
 import { apiClient } from '@/lib/api'
@@ -6,13 +6,15 @@ import { toast } from 'sonner'
 import type { ConvertQueue } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { SwapIcon } from '@phosphor-icons/react'
+import { usePageVisibility } from '@/hooks/use-visibility'
 export function ConvertsView() {
   const [tasks, setTasks] = useState<ConvertQueue[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const scrollPositionRef = useRef(0)
+  const isVisible = usePageVisibility()
 
-  const fetchTasks = async (isInitial = false) => {
+  const fetchTasks = useCallback(async (isInitial = false) => {
     const scrollContainer = scrollContainerRef.current
     if (scrollContainer && !isInitial) {
       scrollPositionRef.current = scrollContainer.scrollTop
@@ -31,13 +33,17 @@ export function ConvertsView() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
+    if (!isVisible) {
+      return
+    }
+
     fetchTasks(true)
     const interval = setInterval(() => fetchTasks(false), 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [isVisible, fetchTasks])
 
   useEffect(() => {
     if (scrollContainerRef.current && scrollPositionRef.current > 0) {

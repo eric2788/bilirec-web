@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -9,6 +9,7 @@ import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordTask } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
+import { usePageVisibility } from '@/hooks/use-visibility'
 interface RecordsViewProps {
   onRefresh?: () => void
 }
@@ -21,8 +22,9 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
   const [isAdding, setIsAdding] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const scrollPositionRef = useRef(0)
+  const isVisible = usePageVisibility()
 
-  const fetchTasks = async (isInitial = false) => {
+  const fetchTasks = useCallback(async (isInitial = false) => {
     const scrollContainer = scrollContainerRef.current
     if (scrollContainer && !isInitial) {
       scrollPositionRef.current = scrollContainer.scrollTop
@@ -41,13 +43,17 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
+    if (!isVisible) {
+      return
+    }
+
     fetchTasks(true)
     const interval = setInterval(() => fetchTasks(false), 5000)
     return () => clearInterval(interval)
-  }, [])
+  }, [isVisible, fetchTasks])
 
   useEffect(() => {
     if (scrollContainerRef.current && scrollPositionRef.current > 0) {
