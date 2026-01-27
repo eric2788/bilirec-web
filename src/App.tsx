@@ -4,6 +4,7 @@ import { LoginView } from '@/components/LoginView'
 import { RecordsView } from '@/components/RecordsView'
 import { FilesView } from '@/components/FilesView'
 import { ConvertsView } from '@/components/ConvertsView'
+import { SubscribeView } from '@/components/SubscribeView'
 import { BottomNav } from '@/components/BottomNav'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { Button } from '@/components/ui/button'
@@ -21,7 +22,7 @@ function App() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [activeTab, setActiveTab] = useState<'records' | 'files' | 'converts'>('records')
+  const [activeTab, setActiveTab] = useState<'records' | 'files' | 'converts' | 'subscribe'>('records')
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -157,8 +158,10 @@ function App() {
                 <RecordsView />
               ) : activeTab === 'files' ? (
                 <FilesView />
-              ) : (
+              ) : activeTab === 'converts' ? (
                 <ConvertsView />
+              ) : (
+                <SubscribeView />
               )}
             </motion.div>
           </AnimatePresence>

@@ -6,7 +6,11 @@ import type {
   StartRecordRequest,
   RecordInfo,
   ConvertQueue,
-  ShareFileInfo
+  ShareFileInfo,
+  RoomInfo,
+  LiveStatus,
+  SubscriptionStatus,
+  SubscribedRooms
 } from "./types";
 
 class ApiClient {
@@ -286,6 +290,53 @@ class ApiClient {
 
   async deleteConvertTask(taskId: string): Promise<void> {
     await this.client.delete(`/convert/tasks/${encodeURIComponent(taskId)}`);
+  }
+
+  // Room info methods
+  async getRoomInfo(roomId: number): Promise<RoomInfo> {
+    const response = await this.client.get<RoomInfo>(`/room/${roomId}/info`);
+    return response.data;
+  }
+
+  async getRoomInfos(roomIds: number[]): Promise<RoomInfo[]> {
+    const idsParam = roomIds.join(',');
+    const response = await this.client.get<RoomInfo[] | Record<string, RoomInfo>>(`/room/infos?roomIDs=${idsParam}`);
+    
+    // API returns an object with room IDs as keys, convert to array
+    if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+      return Object.values(response.data);
+    }
+    
+    return Array.isArray(response.data) ? response.data : [];
+  }
+
+  async checkLiveStatus(roomId: number): Promise<LiveStatus> {
+    const response = await this.client.get<LiveStatus>(`/room/${roomId}/live`);
+    return response.data;
+  }
+
+  async getRecordStatus(roomId: number): Promise<RecordInfo> {
+    const response = await this.client.get<RecordInfo>(`/record/${roomId}/status`);
+    return response.data;
+  }
+
+  // Room subscription methods
+  async subscribeRoom(roomId: number): Promise<void> {
+    await this.client.post(`/room/${roomId}`);
+  }
+
+  async unsubscribeRoom(roomId: number): Promise<void> {
+    await this.client.delete(`/room/${roomId}`);
+  }
+
+  async checkSubscription(roomId: number): Promise<SubscriptionStatus> {
+    const response = await this.client.get<SubscriptionStatus>(`/room/subscribe/${roomId}`);
+    return response.data;
+  }
+
+  async getSubscribedRooms(): Promise<number[]> {
+    const response = await this.client.get<SubscribedRooms>('/room/subscribe');
+    return response.data.room_ids ?? [];
   }
 
 }

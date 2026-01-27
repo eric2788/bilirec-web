@@ -1,9 +1,9 @@
 import { cn } from '@/lib/utils'
-import { FileIcon, SwapIcon } from '@phosphor-icons/react'
+import { FileIcon, SwapIcon, BellIcon } from '@phosphor-icons/react'
 
 type LeftSidebarProps = {
-  activeTab: 'records' | 'files' | 'converts'
-  onTabChange: (t: 'records' | 'files' | 'converts') => void
+  activeTab: 'records' | 'files' | 'converts' | 'subscribe'
+  onTabChange: (t: 'records' | 'files' | 'converts' | 'subscribe') => void
 }
 
 export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
@@ -55,6 +55,20 @@ export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
         >
           <span className="shrink-0"><SwapIcon size={18} weight="bold" /></span>
           <span>轉換任務</span>
+        </button>
+
+        <button
+          onClick={() => onTabChange('subscribe')}
+          aria-pressed={activeTab === 'subscribe'}
+          className={cn(
+            'flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors w-full cursor-pointer',
+            activeTab === 'subscribe'
+              ? 'text-primary bg-primary/10'
+              : 'text-muted-foreground hover:text-primary hover:bg-secondary/10'
+          )}
+        >
+          <span className="shrink-0"><BellIcon size={18} weight="bold" /></span>
+          <span>訂閱管理</span>
         </button>
       </nav>
     </aside>

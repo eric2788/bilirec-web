@@ -85,3 +85,16 @@ export interface ConvertQueue {
   output_format: string
   delete_source: boolean
 }
+
+export interface SubscriptionStatus {
+  room_id: number
+  is_subscribed: boolean
+}
+
+export interface SubscribedRooms {
+  room_ids: number[]
+}
+
+export interface LiveStatus {
+  live_status: number
+}

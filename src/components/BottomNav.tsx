@@ -1,9 +1,9 @@
 import { cn } from '@/lib/utils'
-import { SwapIcon } from '@phosphor-icons/react'
+import { SwapIcon, BellIcon } from '@phosphor-icons/react'
 
 interface BottomNavProps {
-  activeTab: 'records' | 'files' | 'converts'
-  onTabChange: (tab: 'records' | 'files' | 'converts') => void
+  activeTab: 'records' | 'files' | 'converts' | 'subscribe'
+  onTabChange: (tab: 'records' | 'files' | 'converts' | 'subscribe') => void
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
@@ -49,6 +49,18 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             <SwapIcon size={18} weight="bold" />
           </span>
           <span className="text-xs font-medium">轉換任務</span>
+        </button>
+        <button
+          onClick={() => onTabChange('subscribe')}
+          className={cn(
+            'flex flex-col items-center justify-center gap-1 flex-1 h-full transition-colors',
+            activeTab === 'subscribe' ? 'text-primary' : 'text-muted-foreground'
+          )}
+        >
+          <span className="w-6 h-6 flex items-center justify-center">
+            <BellIcon size={18} weight="bold" />
+          </span>
+          <span className="text-xs font-medium">訂閱管理</span>
         </button>
       </div>
     </nav>
