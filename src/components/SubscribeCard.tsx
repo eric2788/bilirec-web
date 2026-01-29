@@ -37,6 +37,13 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
   }
 
   const getLiveStatusBadge = () => {
+    if (roomInfo.lock_status === 1) {
+      return (
+        <Badge variant="destructive">
+          已封禁
+        </Badge>
+      )
+    }
     if (roomInfo.live_status === 1) {
       return (
         <Badge className="bg-accent text-accent-foreground animate-pulse-glow">
