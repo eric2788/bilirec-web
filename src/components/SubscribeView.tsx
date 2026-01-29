@@ -60,7 +60,17 @@ export function SubscribeView({ onRefresh }: SubscribeViewProps) {
         )
         
         setRecordingRoomIds(recordingIds)
-        setRooms(Array.isArray(roomInfos) ? roomInfos : [])
+        
+        // Sort rooms: live streaming (live_status === 1) on top
+        const sortedRooms = Array.isArray(roomInfos) 
+          ? [...roomInfos].sort((a, b) => {
+              if (a.live_status === 1 && b.live_status !== 1) return -1
+              if (a.live_status !== 1 && b.live_status === 1) return 1
+              return 0
+            })
+          : []
+        
+        setRooms(sortedRooms)
       }
     } catch (error: any) {
       console.error('Failed to fetch subscribed rooms:', error)
