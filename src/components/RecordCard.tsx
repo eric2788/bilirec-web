@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { PlayIcon, StopIcon, UserIcon, ClockIcon, DatabaseIcon } from '@phosphor-icons/react'
 import { formatFileSize, formatDuration, cn } from '@/lib/utils'
 import type { RecordTask } from '@/lib/types'
@@ -13,8 +14,10 @@ interface RecordCardProps {
 
 export function RecordCard({ task, onStop }: RecordCardProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isStopDialogOpen, setIsStopDialogOpen] = useState(false)
 
-  const handleStop = () => {
+  const confirmStop = async () => {
+    setIsStopDialogOpen(false)
     setIsLoading(true)
     try {
       if (task.status === 'recording') {
@@ -23,6 +26,10 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleStop = () => {
+    setIsStopDialogOpen(true)
   }
 
   const getStatusBadge = () => {
@@ -168,6 +175,25 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
             </Button>
           </div>
         ) : null}
+
+        <Dialog open={isStopDialogOpen} onOpenChange={setIsStopDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>確認停止錄製</DialogTitle>
+              <DialogDescription>
+                確定要停止錄製「{task.roomInfo?.uname ?? `直播間 ${task.roomInfo?.room_id ?? task.roomId}`}」嗎？
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setIsStopDialogOpen(false)} disabled={isLoading}>
+                取消
+              </Button>
+              <Button variant="destructive" onClick={confirmStop} disabled={isLoading}>
+                {isLoading ? '處理中…' : '確認停止'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Card>
   )

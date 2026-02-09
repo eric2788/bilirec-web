@@ -16,6 +16,7 @@ interface SubscribeCardProps {
 export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, onStartRecord }: SubscribeCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isUnsubDialogOpen, setIsUnsubDialogOpen] = useState(false)
+  const [isStartRecordDialogOpen, setIsStartRecordDialogOpen] = useState(false)
 
   const confirmUnsubscribe = async () => {
     setIsUnsubDialogOpen(false)
@@ -27,13 +28,18 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
     }
   }
 
-  const handleStartRecord = async () => {
+  const confirmStartRecord = async () => {
+    setIsStartRecordDialogOpen(false)
     setIsLoading(true)
     try {
       await onStartRecord(roomInfo.room_id)
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleStartRecord = () => {
+    setIsStartRecordDialogOpen(true)
   }
 
   const getLiveStatusBadge = () => {
@@ -187,6 +193,25 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
               </Button>
               <Button variant="destructive" onClick={confirmUnsubscribe} disabled={isLoading}>
                 {isLoading ? '處理中…' : '確認取消'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isStartRecordDialogOpen} onOpenChange={setIsStartRecordDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>確認啓動錄製</DialogTitle>
+              <DialogDescription>
+                確定要啓動錄製「{roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}」嗎？
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="ghost" onClick={() => setIsStartRecordDialogOpen(false)} disabled={isLoading}>
+                取消
+              </Button>
+              <Button onClick={confirmStartRecord} disabled={isLoading}>
+                {isLoading ? '處理中…' : '確認啓動'}
               </Button>
             </DialogFooter>
           </DialogContent>
