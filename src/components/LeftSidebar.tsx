@@ -1,15 +1,18 @@
 import { cn } from '@/lib/utils'
 import { FileIcon, SwapIcon, BellIcon } from '@phosphor-icons/react'
+import { DiskUsageDisplay } from './DiskUsageDisplay'
+import type { DiskUsage } from '@/lib/types'
 
 type LeftSidebarProps = {
   activeTab: 'records' | 'files' | 'converts' | 'subscribe'
   onTabChange: (t: 'records' | 'files' | 'converts' | 'subscribe') => void
+  diskUsage?: DiskUsage | null
 }
 
-export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
+export function LeftSidebar({ activeTab, onTabChange, diskUsage }: LeftSidebarProps) {
   return (
     <aside className="hidden lg:flex lg:flex-col w-56 h-full p-4 border-r border-border bg-sidebar/95 text-sidebar-foreground">
-      <nav className="flex flex-col gap-2 mt-2">
+      <nav className="flex flex-col gap-2 mt-2 flex-1">
         <button
           onClick={() => onTabChange('records')}
           aria-pressed={activeTab === 'records'}
@@ -71,6 +74,12 @@ export function LeftSidebar({ activeTab, onTabChange }: LeftSidebarProps) {
           <span>訂閱管理</span>
         </button>
       </nav>
+
+      {diskUsage && (
+        <div className="pt-4 border-t border-border">
+          <DiskUsageDisplay diskUsage={diskUsage} />
+        </div>
+      )}
     </aside>
   )
 } 

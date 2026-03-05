@@ -7,12 +7,14 @@ import { ConvertsView } from '@/components/ConvertsView'
 import { SubscribeView } from '@/components/SubscribeView'
 import { BottomNav } from '@/components/BottomNav'
 import { LeftSidebar } from '@/components/LeftSidebar'
+import { DiskUsageDisplay } from '@/components/DiskUsageDisplay'
 import { Button } from '@/components/ui/button'
 import { SignOutIcon, SunIcon, MoonIcon } from '@phosphor-icons/react'
 import { apiClient } from '@/lib/api'
 import { storage } from '@/lib/storage'
 import { toast, Toaster } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
+import type { DiskUsage } from '@/lib/types'
 
 function App() {
   const { theme, setTheme, resolvedTheme } = useTheme()
@@ -23,6 +25,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [activeTab, setActiveTab] = useState<'records' | 'files' | 'converts' | 'subscribe'>('records')
+  const [diskUsage, setDiskUsage] = useState<DiskUsage | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -32,6 +35,13 @@ function App() {
           apiClient.setBaseURL(serverUrl)
           await apiClient.getRecords()
           setIsAuthenticated(true)
+          // Fetch initial disk usage
+          try {
+            const usage = await apiClient.getDiskUsage()
+            setDiskUsage(usage)
+          } catch (error) {
+            console.error('Failed to fetch disk usage:', error)
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error)
@@ -57,6 +67,25 @@ function App() {
     window.addEventListener('api:unauthorized', onUnauthorized)
     return () => window.removeEventListener('api:unauthorized', onUnauthorized)
   }, [])
+
+  // Refresh disk usage every 30 seconds when authenticated
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const fetchDiskUsage = async () => {
+      try {
+        const usage = await apiClient.getDiskUsage()
+        setDiskUsage(usage)
+      } catch (error) {
+        console.error('Failed to fetch disk usage:', error)
+      }
+    }
+
+    fetchDiskUsage()
+    const interval = setInterval(fetchDiskUsage, 30000) // Refresh every 30 seconds
+
+    return () => clearInterval(interval)
+  }, [isAuthenticated])
 
   const handleLoginSuccess = () => {
     setIsAuthenticated(true)
@@ -115,6 +144,7 @@ function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            <DiskUsageDisplay diskUsage={diskUsage} compact={true} />
             <Button
               variant="ghost"
               size="sm"
@@ -142,7 +172,7 @@ function App() {
       </div>
 
       <div className="h-[calc(100vh-73px)] overflow-x-hidden flex">
-        <LeftSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        <LeftSidebar activeTab={activeTab} onTabChange={setActiveTab} diskUsage={diskUsage} />
 
         <div className="flex-1">
           <AnimatePresence mode="wait">

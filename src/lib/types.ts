@@ -98,3 +98,9 @@ export interface SubscribedRooms {
 export interface LiveStatus {
   live_status: number
 }
+
+export interface DiskUsage {
+  total: number
+  used: number
+  free: number
+}

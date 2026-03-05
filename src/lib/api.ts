@@ -10,7 +10,8 @@ import type {
   RoomInfo,
   LiveStatus,
   SubscriptionStatus,
-  SubscribedRooms
+  SubscribedRooms,
+  DiskUsage
 } from "./types";
 
 class ApiClient {
@@ -337,6 +338,11 @@ class ApiClient {
   async getSubscribedRooms(): Promise<number[]> {
     const response = await this.client.get<SubscribedRooms>('/room/subscribe');
     return response.data.room_ids ?? [];
+  }
+
+  async getDiskUsage(): Promise<DiskUsage> {
+    const response = await this.client.get<DiskUsage>('/files/disk-space');
+    return response.data;
   }
 
 }
