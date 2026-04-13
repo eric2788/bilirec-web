@@ -182,9 +182,6 @@ importers:
       vaul:
         specifier: ^1.1.2
         version: 1.1.2(@types/react-dom@19.2.3(@types/react@19.2.7))(@types/react@19.2.7)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      zod:
-        specifier: ^4.3.4
-        version: 4.3.4
     devDependencies:
       '@eslint/js':
         specifier: ^9.21.0
@@ -2662,9 +2659,6 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod@4.3.4:
-    resolution: {integrity: sha512-Zw/uYiiyF6pUT1qmKbZziChgNPRu+ZRneAsMUDU6IwmXdWt5JwcUfy2bvLOCUtz5UniaN/Zx5aFttZYbYc7O/A==}
-
 snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
@@ -4963,5 +4957,3 @@ snapshots:
       strip-ansi: 7.1.2
 
   yocto-queue@0.1.0: {}
-
-  zod@4.3.4: {}
