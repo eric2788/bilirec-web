@@ -7,7 +7,10 @@ A Progressive Web App (PWA) for managing Bilibili live stream recordings through
 - 📱 **Mobile-First PWA**: Install on mobile devices for a native-like experience
 - 🎥 **Recording Management**: Start/stop recordings, view status and statistics
 - 📁 **File Browser**: Browse and download recorded files in FLV/MP4 format
-- 🔄 **Real-time Updates**: Auto-refresh recording status every 5 seconds
+- ▶️ **MP4 Preview**: Preview MP4 recordings directly in the app
+- 🔗 **File Sharing**: Share recording links/files from the file card actions
+- 🔄 **Format Conversion**: Convert recordings between supported formats from the converts view
+- ⚡ **Real-time Updates**: Auto-refresh recording status every 5 seconds
 - 🌐 **Multi-Server Support**: Connect to different bilirec server instances
 - 🔒 **JWT Authentication**: Secure login with token-based auth
 
