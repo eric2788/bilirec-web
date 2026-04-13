@@ -182,41 +182,66 @@ const handleShare = async () => {
   
   if (isDir) {
     const path = currentPath ? `${currentPath}/${name}` : name
-    return (
-      <Card className="w-full p-4 file-card transition-all hover:shadow-lg">
-        <div className="flex items-center gap-3">
-          <button
-            className="flex items-center gap-3 flex-1 min-w-0 text-left p-0 mr-2 cursor-pointer"
-            onClick={(e) => { e.stopPropagation(); onNavigate?.(path) }}
-            aria-label={`打開資料夾 ${name}`}
-            title="打開資料夾"
-          >
-            <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
-              <FolderIcon weight="fill" size={24} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-semibold text-card-foreground file-name">{name}</p>
-              <p className="text-sm text-muted-foreground">資料夾</p>
-            </div>
-          </button>
 
-          <div className="flex items-center gap-2">
-            <Button
-              size="icon"
-              variant={"destructive-ghost"}
-              className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", isDeleting ? 'opacity-50 pointer-events-none' : '')}
-              disabled={isDeleting}
-              onClick={(e) => {
-                e.stopPropagation()
-                openDeleteDialog(true)
-              }}
-              aria-label={`刪除資料夾 ${name}`}
-              title="刪除"
-            >
-              <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
-                <TrashSimpleIcon size={16} />
-              </span>
-            </Button>
+    const handleOpenFolder = () => {
+      onNavigate?.(path)
+    }
+
+    return (
+      <Card
+        className="h-full w-full p-4 file-card cursor-pointer transition-all hover:shadow-lg"
+        role="button"
+        tabIndex={0}
+        onClick={handleOpenFolder}
+        onKeyDown={(e) => {
+          if (e.target !== e.currentTarget) return
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            handleOpenFolder()
+          }
+        }}
+        aria-label={`打開資料夾 ${name}`}
+        title="打開資料夾"
+      >
+        <div className="flex h-full gap-3">
+          <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
+            <FolderIcon weight="fill" size={24} />
+          </div>
+
+          <div className="flex grow min-w-0 flex-col">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-card-foreground file-name leading-6">
+                  {name}
+                </p>
+              </div>
+            </div>
+
+            <div className="grow" />
+
+            <div className="mb-2 min-w-0 text-xs text-muted-foreground">
+              <p className="font-mono">資料夾</p>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="destructive"
+                className={cn("flex-1", isDeleting ? 'cursor-wait' : '')}
+                disabled={isDeleting}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  openDeleteDialog(true)
+                }}
+                aria-label={`刪除資料夾 ${name}`}
+                title="刪除"
+              >
+                <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
+                  <TrashSimpleIcon size={16} />
+                </span>
+                <span>{isDeleting ? '刪除中…' : '刪除'}</span>
+              </Button>
+            </div>
           </div>
         </div>
 
