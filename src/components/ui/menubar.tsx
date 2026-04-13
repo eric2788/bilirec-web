@@ -1,8 +1,8 @@
 import { ComponentProps } from "react"
 import * as MenubarPrimitive from "@radix-ui/react-menubar"
-import CheckIcon from "lucide-react/dist/esm/icons/check"
-import ChevronRightIcon from "lucide-react/dist/esm/icons/chevron-right"
-import CircleIcon from "lucide-react/dist/esm/icons/circle"
+import { Check as CheckIcon } from "lucide-react"
+import { ChevronRight as ChevronRightIcon } from "lucide-react"
+import { Circle as CircleIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
@@ -274,3 +274,4 @@ export {
   MenubarSubTrigger,
   MenubarSubContent,
 }
+

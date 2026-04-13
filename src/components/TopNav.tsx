@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { VideoCamera, File } from '@phosphor-icons/react'
+import { VideoCameraIcon, FileIcon } from '@phosphor-icons/react'
 
 interface TopNavProps {
   activeTab: 'records' | 'files'
@@ -17,7 +17,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
           activeTab === 'records' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary hover:bg-secondary/10'
         )}
       >
-        <span className="shrink-0"><VideoCamera size={16} weight="bold" /></span>
+        <span className="shrink-0"><VideoCameraIcon size={16} weight="bold" /></span>
         <span>錄製管理</span>
       </button>
 
@@ -29,7 +29,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
           activeTab === 'files' ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:text-primary hover:bg-secondary/10'
         )}
       >
-        <span className="shrink-0"><File size={16} weight="bold" /></span>
+        <span className="shrink-0"><FileIcon size={16} weight="bold" /></span>
         <span>錄製檔案</span>
       </button>
     </nav>
