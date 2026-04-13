@@ -56,9 +56,9 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
   }
 
   return (
-    <Card className="p-4 record-card transition-all hover:shadow-lg">
-      <div className="flex flex-col gap-3">
-        <div className="relative">
+    <Card className="h-full p-4 record-card transition-all hover:shadow-lg">
+      <div className="flex h-full flex-col gap-3">
+        <div className="relative grow">
           <div className="flex flex-col sm:flex-row items-start gap-3">
             {task.roomInfo?.cover ? (
               <div className="w-full sm:w-40 sm:h-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
@@ -149,7 +149,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
         )}
 
         {task.status === 'recording' ? (
-          <div className="flex flex-col sm:flex-row gap-2">
+          <div className="flex flex-col sm:flex-row gap-2 mt-auto">
             <Button
               asChild
               variant="outline"

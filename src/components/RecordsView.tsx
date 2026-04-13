@@ -151,7 +151,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
             description="點擊右上角的「添加」按鈕開始錄製"
           />
         ) : (
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="cards-grid grid gap-4">
             {tasks.map((task) => (
               <RecordCard
                 key={task.roomId}

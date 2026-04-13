@@ -76,7 +76,7 @@ export function FilesView() {
             description="完成錄製後檔案會出現在這裡"
           />
         ) : (
-          <div className="space-y-3">
+          <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
             {files.map((file, index) => (
               <FileCard 
                 key={`${file.name}-${index}`} 

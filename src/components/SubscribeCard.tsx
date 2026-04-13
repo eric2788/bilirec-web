@@ -13,10 +13,25 @@ interface SubscribeCardProps {
   onStartRecord: (roomId: number) => Promise<void>
 }
 
+const normalizeText = (value?: string) => {
+  if (!value) return ''
+
+  return value
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
 export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, onStartRecord }: SubscribeCardProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isUnsubDialogOpen, setIsUnsubDialogOpen] = useState(false)
   const [isStartRecordDialogOpen, setIsStartRecordDialogOpen] = useState(false)
+  const cleanTitle = normalizeText(roomInfo.title) || '載入中...'
+  const cleanDescription = normalizeText(roomInfo.description)
 
   const confirmUnsubscribe = async () => {
     setIsUnsubDialogOpen(false)
@@ -65,21 +80,21 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
   }
 
   return (
-    <Card className="p-4 transition-all hover:shadow-lg">
-      <div className="flex flex-col gap-3">
-        <div className="relative">
+    <Card className="h-full p-4 transition-all hover:shadow-lg">
+      <div className="flex h-full flex-col gap-3">
+        <div className="relative grow">
           <div className="flex flex-col sm:flex-row items-start gap-3">
             {roomInfo.cover ? (
-              <div className="w-full sm:w-40 sm:h-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
+              <div className="w-full h-24 sm:w-40 sm:h-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
                 <img
                   src={roomInfo.cover}
-                  alt={roomInfo.title ?? roomInfo.uid.toString()}
+                  alt={cleanTitle || roomInfo.uid.toString()}
                   referrerPolicy="no-referrer"
-                  className="w-full object-cover"
+                  className="h-full w-full object-cover"
                 />
               </div>
             ) : (
-              <div className="w-full sm:w-40 sm:h-24 shrink-0 bg-muted rounded-md flex items-center justify-center p-4">
+              <div className="w-full h-24 sm:w-40 sm:h-24 shrink-0 bg-muted rounded-md flex items-center justify-center p-4">
                 <UserIcon size={20} />
               </div>
             )}
@@ -90,8 +105,8 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                   <p className="font-semibold text-card-foreground truncate">
                     {roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}
                   </p>
-                  <p className="text-sm text-muted-foreground truncate">
-                    {roomInfo.title || '載入中...'}
+                  <p className="text-sm text-muted-foreground line-clamp-2 leading-5 wrap-break-word">
+                    {cleanTitle}
                   </p>
                 </div>
 
@@ -127,9 +142,9 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                 </div>
               </div>
 
-              {roomInfo.description && (
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-3 wrap-break-word break-all whitespace-normal">
-                  {roomInfo.description}
+              {cleanDescription && (
+                <p className="text-sm text-muted-foreground/90 mt-2 line-clamp-2 wrap-break-word whitespace-normal">
+                  {cleanDescription}
                 </p>
               )}
             </div>
@@ -139,7 +154,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
         </div>
 
         {/* Action buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full mt-auto">
           {roomInfo.live_status === 1 && (
             <>
               <Button

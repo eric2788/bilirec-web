@@ -11,11 +11,11 @@ import type { RoomInfo } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { usePageVisibility } from '@/hooks/use-visibility'
 
-interface SubscribeViewProps {
+interface SubscribesViewProps {
   onRefresh?: () => void
 }
 
-export function SubscribeView({ onRefresh }: SubscribeViewProps) {
+export function SubscribesView({ onRefresh }: SubscribesViewProps) {
   const [rooms, setRooms] = useState<RoomInfo[]>([])
   const [recordingRoomIds, setRecordingRoomIds] = useState<Set<number>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
@@ -206,7 +206,7 @@ export function SubscribeView({ onRefresh }: SubscribeViewProps) {
             description="點擊右上角的「訂閱」按鈕開始訂閱直播間"
           />
         ) : (
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 w-full">
+          <div className="cards-grid grid gap-4 w-full">
             {rooms.map((room) => (
               <div key={room.room_id} className="w-full">
                 <SubscribeCard

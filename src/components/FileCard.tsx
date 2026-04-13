@@ -183,7 +183,7 @@ const handleShare = async () => {
   if (isDir) {
     const path = currentPath ? `${currentPath}/${name}` : name
     return (
-      <Card className="p-4 file-card transition-all hover:shadow-lg">
+      <Card className="w-full p-4 file-card transition-all hover:shadow-lg">
         <div className="flex items-center gap-3">
           <button
             className="flex items-center gap-3 flex-1 min-w-0 text-left p-0 mr-2 cursor-pointer"
@@ -239,17 +239,20 @@ const handleShare = async () => {
   }
 
   return (
-    <Card className="p-4 file-card transition-all hover:shadow-lg">
-      <div className="flex gap-3">
+    <Card className="h-full p-4 file-card transition-all hover:shadow-lg">
+      <div className="flex h-full gap-3">
         <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
           <FileVideoIcon weight="fill" size={24} />
         </div>
 
-        <div className="flex-1 min-w-0">
+        <div className="flex grow min-w-0 flex-col">
           <div className="flex items-start justify-between gap-2 mb-2">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-card-foreground file-name wrap-break-word">
+              <p className="font-semibold text-card-foreground file-name wrap-break-word line-clamp-2 leading-6">
                 {name}
+              </p>
+              <p className="mt-1 break-all text-[11px] text-muted-foreground/70">
+                {file.path ?? '—'}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -264,12 +267,13 @@ const handleShare = async () => {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
-            <span className="font-mono">{sizeVal ? formatFileSize(sizeVal) : '—'}</span>
-            <span>{file.path ?? '—'}</span>
+          <div className="grow" />
+
+          <div className="mb-2 min-w-0 text-xs text-muted-foreground">
+            <p className="font-mono">{sizeVal ? formatFileSize(sizeVal) : '—'}</p>
           </div>
 
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col gap-2 w-full mt-1">
             <div className="flex gap-2">
               <Button
                 size="sm"

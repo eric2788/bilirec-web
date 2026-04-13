@@ -4,7 +4,7 @@ import { LoginView } from '@/components/LoginView'
 import { RecordsView } from '@/components/RecordsView'
 import { FilesView } from '@/components/FilesView'
 import { ConvertsView } from '@/components/ConvertsView'
-import { SubscribeView } from '@/components/SubscribeView'
+import { SubscribesView } from '@/components/SubscribesView'
 import { BottomNav } from '@/components/BottomNav'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { DiskUsageDisplay } from '@/components/DiskUsageDisplay'
@@ -191,7 +191,7 @@ function App() {
               ) : activeTab === 'converts' ? (
                 <ConvertsView />
               ) : (
-                <SubscribeView />
+                <SubscribesView />
               )}
             </motion.div>
           </AnimatePresence>
