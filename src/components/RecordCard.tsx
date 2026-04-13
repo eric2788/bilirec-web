@@ -61,16 +61,16 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
         <div className="relative grow">
           <div className="flex flex-col sm:flex-row items-start gap-3">
             {task.roomInfo?.cover ? (
-              <div className="w-full sm:w-40 sm:h-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
+              <div className="w-full sm:w-40 shrink-0 overflow-hidden rounded-md bg-muted">
                 <img
                   src={task.roomInfo.cover}
                   alt={task.roomInfo.title ?? task.roomInfo.uid.toString()}
                   referrerPolicy="no-referrer"
-                  className="w-full object-cover"
+                  className="w-full h-auto"
                 />
               </div>
             ) : (
-              <div className="w-full sm:w-40 sm:h-24 shrink-0 bg-muted rounded-md flex items-center justify-center p-4">
+              <div className="w-full h-24 sm:w-40 sm:h-24 shrink-0 bg-muted rounded-md flex items-center justify-center p-4">
                 <UserIcon size={20} />
               </div>
             )}

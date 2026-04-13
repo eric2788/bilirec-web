@@ -85,12 +85,12 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
         <div className="relative grow">
           <div className="flex flex-col sm:flex-row items-start gap-3">
             {roomInfo.cover ? (
-              <div className="w-full h-24 sm:w-40 sm:h-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
+              <div className="w-full sm:w-40 shrink-0 overflow-hidden rounded-md bg-muted">
                 <img
                   src={roomInfo.cover}
                   alt={cleanTitle || roomInfo.uid.toString()}
                   referrerPolicy="no-referrer"
-                  className="h-full w-full object-cover"
+                  className="w-full h-auto"
                 />
               </div>
             ) : (
