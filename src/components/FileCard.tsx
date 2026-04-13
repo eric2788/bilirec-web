@@ -6,7 +6,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { MoreVerticalIcon } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
-import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, ShareNetworkIcon, SwapIcon } from '@phosphor-icons/react'
+import { DownloadSimpleIcon, FileVideoIcon, FolderIcon, TrashSimpleIcon, ShareNetworkIcon, SwapIcon, EyeIcon } from '@phosphor-icons/react'
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select' 
 import { formatFileSize } from '@/lib/utils'
 import type { RecordFile } from '@/lib/types'
@@ -32,6 +32,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
   const isDir = 'is_dir' in file ? !!(file as any).is_dir : !!(file as any).isDir
   const sizeVal = typeof file.size === 'number' ? file.size : Number((file as any).size) || 0
   const extension = file.name.split('.').pop()?.toUpperCase()
+  const isMp4 = extension?.toLowerCase() === 'mp4'
 
   const isRecording = 'is_recording' in file ? !!(file as any).is_recording : false
 
@@ -100,6 +101,25 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     } finally {
       setIsDownloading(false)
     }
+  }
+
+  const handlePreview = () => {
+    if (isDir) return
+
+    if (isRecording) {
+      toast.error('檔案正在錄製中，無法預覽')
+      return
+    }
+
+    const fullPath = currentPath ? `${currentPath}/${name}` : name
+    const encodedPath = fullPath
+      .split('/')
+      .filter(Boolean)
+      .map(encodeURIComponent)
+      .join('/')
+    const baseURL = apiClient.getBaseURL() ? apiClient.getBaseURL().replace(/\/$/, '') : ''
+    const previewUrl = `${baseURL}/files/playback/${encodedPath}`
+    window.open(previewUrl, '_blank', 'noopener,noreferrer')
   }
 
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
@@ -265,12 +285,24 @@ const handleShare = async () => {
                 <span className="relative z-10">
                   {isRecording ? '錄製中' : isDownloading ? '下載中…' : '下載'}
                 </span>
-
               </Button>
 
-              {/* Desktop actions: show share, convert & delete on sm+ */}
+              {/* Desktop actions: show preview (mp4), share, convert & delete on sm+ */}
               <div className="hidden sm:flex items-center gap-2">
-                {extension?.toLowerCase() !== 'mp4' && (
+                {isMp4 && (
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center shrink-0")}
+                    disabled={isRecording || isDeleting || isDownloading}
+                    onClick={handlePreview}
+                    aria-label={`預覽 ${name}`}
+                    title={isRecording ? '檔案正在錄製中，無法預覽' : '預覽'}
+                  >
+                    <EyeIcon size={16} />
+                  </Button>
+                )}
+                {!isMp4 && (
                   <Button
                     size="icon"
                     variant="outline"
@@ -333,13 +365,18 @@ const handleShare = async () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    {isMp4 && (
+                      <DropdownMenuItem onSelect={() => { handlePreview(); }} disabled={isDeleting || isDownloading || isRecording}>
+                        預覽
+                      </DropdownMenuItem>
+                    )}
                     {/* Show share item only when not recording or downloading */}
                     {!isRecording && !isDownloading && (
                       <DropdownMenuItem onSelect={() => { handleShare(); }} disabled={isSharing || isDeleting}>
                         {isSharing ? '產生分享連結中…' : '分享'}
                       </DropdownMenuItem>
                     )}
-                    {extension?.toLowerCase() !== 'mp4' && (
+                    {!isMp4 && (
                       <DropdownMenuItem onSelect={() => { openConvertDialog(); }} disabled={isConverting || isDownloading || isDeleting || isRecording}>
                         {isConverting ? '轉換中…' : '轉換'}
                       </DropdownMenuItem>
