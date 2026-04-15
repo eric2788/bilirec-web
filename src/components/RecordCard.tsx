@@ -3,9 +3,10 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { PlayIcon, StopIcon, UserIcon, ClockIcon, DatabaseIcon } from '@phosphor-icons/react'
+import { PlayIcon, StopIcon, UserIcon, ClockIcon, DatabaseIcon, ArrowSquareOutIcon } from '@phosphor-icons/react'
 import { formatFileSize, formatDuration, cn } from '@/lib/utils'
 import type { RecordTask } from '@/lib/types'
+import { useRole } from '@/lib/role-context'
 
 interface RecordCardProps {
   task: RecordTask
@@ -13,6 +14,7 @@ interface RecordCardProps {
 }
 
 export function RecordCard({ task, onStop }: RecordCardProps) {
+  const { isReadOnly } = useRole()
   const [isLoading, setIsLoading] = useState(false)
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false)
 
@@ -152,18 +154,20 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
           <div className="flex flex-col sm:flex-row gap-2 mt-auto">
             <Button
               asChild
-              variant="outline"
-              className="w-full sm:w-1/2 transition-colors hover:bg-muted/60 dark:hover:bg-accent/80"
+              variant="default"
+              className="w-full sm:flex-1 transition-all hover:shadow-lg"
             >
               <a
                 href={`https://live.bilibili.com/${task.roomInfo?.room_id ?? task.roomId}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
+                <ArrowSquareOutIcon size={18} />
                 進入直播間
               </a>
             </Button>
 
+            {!isReadOnly && (
             <Button
               onClick={handleStop}
               disabled={isLoading}
@@ -173,6 +177,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
               <StopIcon size={20} />
               停止錄製
             </Button>
+            )}
           </div>
         ) : null}
 

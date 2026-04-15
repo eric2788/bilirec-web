@@ -3,6 +3,11 @@ export interface LoginRequest {
   pass: string
 }
 
+export interface LoginResponse {
+  user: string
+  role: string
+}
+
 export interface RoomInfo {
   room_id: number
   uid: number

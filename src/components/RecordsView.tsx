@@ -10,11 +10,13 @@ import { toast } from 'sonner'
 import type { RecordTask } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { usePageVisibility } from '@/hooks/use-visibility'
+import { useRole } from '@/lib/role-context'
 interface RecordsViewProps {
   onRefresh?: () => void
 }
 
 export function RecordsView({ onRefresh }: RecordsViewProps) {
+  const { isReadOnly } = useRole()
   const [tasks, setTasks] = useState<RecordTask[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [roomId, setRoomId] = useState('')
@@ -103,6 +105,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
       <div className="sticky top-0 bg-background z-10 p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold">錄製管理</h2>
+          {!isReadOnly && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -133,6 +136,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 

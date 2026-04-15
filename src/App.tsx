@@ -9,12 +9,14 @@ import { BottomNav } from '@/components/BottomNav'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { DiskUsageDisplay } from '@/components/DiskUsageDisplay'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { SignOutIcon, SunIcon, MoonIcon } from '@phosphor-icons/react'
 import { apiClient } from '@/lib/api'
 import { storage } from '@/lib/storage'
 import { toast, Toaster } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { DiskUsage } from '@/lib/types'
+import type { DiskUsage, LoginResponse } from '@/lib/types'
+import { RoleContext } from '@/lib/role-context'
 
 function App() {
   const { theme, setTheme, resolvedTheme } = useTheme()
@@ -26,6 +28,10 @@ function App() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   const [activeTab, setActiveTab] = useState<'records' | 'files' | 'converts' | 'subscribe'>('records')
   const [diskUsage, setDiskUsage] = useState<DiskUsage | null>(null)
+  const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('user-role') ?? 'admin')
+  const [userName, setUserName] = useState<string>(() => localStorage.getItem('user-name') ?? '')
+
+  const isReadOnly = userRole === 'viewer'
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,6 +41,7 @@ function App() {
           apiClient.setBaseURL(serverUrl)
           await apiClient.getRecords()
           setIsAuthenticated(true)
+          // Restore role from localStorage (already initialised in useState)
           // Fetch initial disk usage
           try {
             const usage = await apiClient.getDiskUsage()
@@ -59,8 +66,13 @@ function App() {
     }
 
     const onUnauthorized = () => {
+      if (!isAuthenticated) return // Ignore if we're still checking auth on initial load or already unauthenticated
       setIsAuthenticated(false)
       setIsCheckingAuth(false)
+      localStorage.removeItem('user-role')
+      localStorage.removeItem('user-name')
+      setUserRole('admin')
+      setUserName('')
       toast.error('會話逾期，請重新登入') // or localized message you prefer
     }
 
@@ -87,8 +99,19 @@ function App() {
     return () => clearInterval(interval)
   }, [isAuthenticated])
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (response: LoginResponse) => {
+    const role = response.role || 'admin'
+    const user = response.user || ''
+    localStorage.setItem('user-role', role)
+    if (user) localStorage.setItem('user-name', user)
+    setUserRole(role)
+    setUserName(user)
     setIsAuthenticated(true)
+    if (user) {
+      toast.success(`歡迎回來，${user}！`)
+    } else {
+      toast.success('登入成功')
+    }
   }
 
   const handleLogout = async () => {
@@ -96,6 +119,10 @@ function App() {
       // Notify server to clear HttpOnly cookie
       await apiClient.logout()
       setIsAuthenticated(false)
+      localStorage.removeItem('user-role')
+      localStorage.removeItem('user-name')
+      setUserRole('admin')
+      setUserName('')
       toast.success('已登出')
     } catch (error) {
       console.error('Logout failed:', error)
@@ -126,7 +153,9 @@ function App() {
     )
   }
 
+
   return (
+    <RoleContext.Provider value={{ role: userRole, userName, isReadOnly }}>
     <div className="min-h-screen bg-background overflow-x-hidden">
       <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border">
         <div className="flex items-center justify-between p-4">
@@ -201,6 +230,7 @@ function App() {
       <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
       <Toaster richColors position="top-center" />
     </div>
+    </RoleContext.Provider>
   )
 }
 

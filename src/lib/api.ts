@@ -11,7 +11,8 @@ import type {
   LiveStatus,
   SubscriptionStatus,
   SubscribedRooms,
-  DiskUsage
+  DiskUsage,
+  LoginResponse
 } from "./types";
 
 class ApiClient {
@@ -58,7 +59,7 @@ class ApiClient {
     // no-op for cookie auth; server must clear cookie on logout
   }
 
-  async login(data: LoginRequest): Promise<any | null> {
+  async login(data: LoginRequest): Promise<LoginResponse | null> {
     try {
       // withCredentials:true makes browser include cookies and accept Set-Cookie from server
       const response = await this.client.post("/login", data);

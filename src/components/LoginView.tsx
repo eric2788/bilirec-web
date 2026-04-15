@@ -8,9 +8,10 @@ import { storage } from '@/lib/storage'
 import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { InfoIcon } from '@phosphor-icons/react'
+import type { LoginResponse } from '@/lib/types'
 
 interface LoginViewProps {
-  onLoginSuccess: () => void
+  onLoginSuccess: (response: LoginResponse) => void
 }
 
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
@@ -55,10 +56,14 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
         try {
           await apiClient.getRecords()
           toast.success('連線成功 (無需登入)')
-          onLoginSuccess()
-        } catch (err) {
+          onLoginSuccess({ user: '', role: 'admin' })
+        } catch (err: any) {
           console.error('Unauthenticated access failed:', err)
-          toast.error('伺服器需要登入，請提供憑證')
+          if (err?.status === 401) {
+            toast.error('伺服器需要登入，請提供憑證')
+          } else {
+            toast.error(err?.message || '連線失敗，請檢查伺服器地址')
+          }
         }
         return
       }
@@ -67,16 +72,20 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       const result = await apiClient.login({ user: username, pass: password })
       if (result) {
         // Server should set an HttpOnly cookie on successful login
-        toast.success('登入成功')
-        onLoginSuccess()
+        onLoginSuccess(result)
       } else {
         // If login failed, fallback to try unauthenticated access (in case server does not require auth)
         try {
           await apiClient.getRecords()
           toast.success('連線成功 (無需登入)')
-          onLoginSuccess()
-        } catch (err) {
-          toast.error('登入失敗，請檢查用戶名和密碼')
+          onLoginSuccess({ user: '', role: 'admin' })
+        } catch (err: any) {
+          console.error('Unauthenticated access failed:', err)
+          if (err?.status === 401) {
+            toast.error('登入失敗，請檢查用戶名和密碼')
+          } else {
+            toast.error(err?.message || '連線失敗，請檢查伺服器地址')
+          }
         }
       }
     } catch (error: any) {

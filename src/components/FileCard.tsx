@@ -13,6 +13,7 @@ import type { RecordFile } from '@/lib/types'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils';
+import { useRole } from '@/lib/role-context'
 
 interface FileCardProps {
   file: RecordFile
@@ -22,6 +23,7 @@ interface FileCardProps {
 }
 
 export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileCardProps) {
+  const { isReadOnly } = useRole()
   const [isDownloading, setIsDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const [isConverting, setIsConverting] = useState(false)
@@ -224,6 +226,7 @@ const handleShare = async () => {
             </div>
 
             <div className="flex gap-2">
+              {!isReadOnly && (
               <Button
                 size="sm"
                 variant="destructive"
@@ -241,6 +244,7 @@ const handleShare = async () => {
                 </span>
                 <span>{isDeleting ? '刪除中…' : '刪除'}</span>
               </Button>
+              )}
             </div>
           </div>
         </div>
@@ -331,7 +335,7 @@ const handleShare = async () => {
                     <EyeIcon size={16} />
                   </Button>
                 )}
-                {!isMp4 && (
+                {!isMp4 && !isReadOnly && (
                   <Button
                     size="icon"
                     variant="outline"
@@ -362,7 +366,7 @@ const handleShare = async () => {
                     </span>
                   </Button>
                 )}
-                {!isRecording && (
+                {!isReadOnly && !isRecording && (
                   <Button
                     size="icon"
                     variant="destructive-ghost"
@@ -405,12 +409,12 @@ const handleShare = async () => {
                         {isSharing ? '產生分享連結中…' : '分享'}
                       </DropdownMenuItem>
                     )}
-                    {!isMp4 && (
+                    {!isMp4 && !isReadOnly && (
                       <DropdownMenuItem onSelect={() => { openConvertDialog(); }} disabled={isConverting || isDownloading || isDeleting || isRecording}>
                         {isConverting ? '轉換中…' : '轉換'}
                       </DropdownMenuItem>
                     )}
-                    {!isRecording && (
+                    {!isReadOnly && !isRecording && (
                       <DropdownMenuItem variant="destructive" onSelect={() => { if (!isDownloading) { openDeleteDialog(false); } }} disabled={isDeleting || isDownloading}>
                         刪除
                       </DropdownMenuItem>

@@ -10,12 +10,14 @@ import { toast } from 'sonner'
 import type { RoomInfo } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { usePageVisibility } from '@/hooks/use-visibility'
+import { useRole } from '@/lib/role-context'
 
 interface SubscribesViewProps {
   onRefresh?: () => void
 }
 
 export function SubscribesView({ onRefresh }: SubscribesViewProps) {
+  const { isReadOnly } = useRole()
   const [rooms, setRooms] = useState<RoomInfo[]>([])
   const [recordingRoomIds, setRecordingRoomIds] = useState<Set<number>>(new Set())
   const [isLoading, setIsLoading] = useState(true)
@@ -159,6 +161,7 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
       <div className="sticky top-0 bg-background z-10 p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold">訂閱管理</h2>
+          {!isReadOnly && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size="sm">
@@ -189,6 +192,7 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </div>
       </div>
 

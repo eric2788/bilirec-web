@@ -3,8 +3,9 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { PlayIcon, UserIcon, TrashIcon } from '@phosphor-icons/react'
+import { PlayIcon, UserIcon, TrashIcon, ArrowSquareOutIcon } from '@phosphor-icons/react'
 import type { RoomInfo } from '@/lib/types'
+import { useRole } from '@/lib/role-context'
 
 interface SubscribeCardProps {
   roomInfo: RoomInfo
@@ -27,6 +28,7 @@ const normalizeText = (value?: string) => {
 }
 
 export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, onStartRecord }: SubscribeCardProps) {
+  const { isReadOnly } = useRole()
   const [isLoading, setIsLoading] = useState(false)
   const [isUnsubDialogOpen, setIsUnsubDialogOpen] = useState(false)
   const [isStartRecordDialogOpen, setIsStartRecordDialogOpen] = useState(false)
@@ -154,44 +156,49 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
         </div>
 
         {/* Action buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 w-full mt-auto">
+        <div className="flex flex-col sm:flex-row gap-2 w-full mt-auto">
           {roomInfo.live_status === 1 && (
             <>
               <Button
                 asChild
-                variant="outline"
-                className="w-full transition-colors hover:bg-muted/60 dark:hover:bg-accent/80"
+                variant="default"
+                className="w-full sm:flex-1 transition-all hover:shadow-lg"
               >
                 <a
                   href={`https://live.bilibili.com/${roomInfo.room_id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
+                  <ArrowSquareOutIcon size={18} />
                   進入直播間
                 </a>
               </Button>
 
+              {!isReadOnly && (
               <Button
                 onClick={handleStartRecord}
                 disabled={isLoading || isRecording}
-                className="w-full transition-all hover:shadow-md"
-                variant={isRecording ? "secondary" : "default"}
+                className="w-full sm:flex-1 transition-all bg-emerald-500 text-white hover:bg-emerald-400 hover:shadow-lg disabled:bg-emerald-500/50"
+                variant="default"
               >
                 <PlayIcon size={20} />
                 {isRecording ? '錄製中' : '啓動錄製'}
               </Button>
+              )}
             </>
           )}
 
+          {!isReadOnly && (
           <Button
             onClick={() => setIsUnsubDialogOpen(true)}
             disabled={isLoading}
             variant="destructive"
-            className={`w-full transition-all hover:shadow-md ${roomInfo.live_status === 1 ? '' : 'sm:col-span-3'}`}
+            className="w-full sm:flex-1 transition-all bg-red-600 text-white hover:bg-red-500 hover:shadow-lg"
           >
             <TrashIcon size={18} />
-            停止訂閱
+            取消訂閱
           </Button>
+          )}
         </div>
 
         <Dialog open={isUnsubDialogOpen} onOpenChange={setIsUnsubDialogOpen}>

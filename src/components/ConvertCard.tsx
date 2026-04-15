@@ -8,6 +8,7 @@ import { XIcon, SwapIcon } from '@phosphor-icons/react'
 import type { ConvertQueue } from '@/lib/types' 
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
+import { useRole } from '@/lib/role-context'
 
 interface ConvertCardProps {
   task: ConvertQueue
@@ -15,6 +16,7 @@ interface ConvertCardProps {
 }
 
 export function ConvertCard({ task, onCancel }: ConvertCardProps) {
+  const { isReadOnly } = useRole()
   const [isCancelling, setIsCancelling] = useState(false)
 
   const baseInput = task.input_path.split(/[\\\/]/).pop() || task.input_path
@@ -43,6 +45,7 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
           <SwapIcon size={20} /> 
         </div>
         {/* Mobile: three-dots at top-right */}
+        {!isReadOnly && (
         <div className="absolute right-3 top-3 sm:hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -57,6 +60,7 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        )}
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
@@ -70,6 +74,7 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
                 <Badge variant="destructive" className="shrink-0 text-sm sm:order-1 sm:text-xs border border-transparent">轉後刪源</Badge>
               )} 
               {/* Desktop: show cancel button */}
+              {!isReadOnly && (
               <div className="hidden sm:inline-flex order-3">
                 <Button
                   size="icon"
@@ -83,6 +88,7 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
                   <XIcon size={16} />
                 </Button>
               </div>
+              )}
 
               {/* mobile menu moved to top-right */}
             </div>
