@@ -67,6 +67,7 @@
         "recharts": "^2.15.1",
         "sonner": "^2.0.1",
         "streamsaver": "^2.0.6",
+        "swr": "^2.4.1",
         "tailwind-merge": "^3.0.2",
         "three": "^0.175.0",
         "tw-animate-css": "^1.2.4",

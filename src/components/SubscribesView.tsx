@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -7,10 +7,11 @@ import { SubscribeCard } from './SubscribeCard'
 import { EmptyState } from './EmptyState'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
-import type { RoomInfo } from '@/lib/types'
+import type { RecordInfo, RoomInfo } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { usePageVisibility } from '@/hooks/use-visibility'
 import { useRole } from '@/lib/role-context'
+import useSWR from 'swr'
 
 interface SubscribesViewProps {
   onRefresh?: () => void
@@ -18,9 +19,6 @@ interface SubscribesViewProps {
 
 export function SubscribesView({ onRefresh }: SubscribesViewProps) {
   const { isReadOnly } = useRole()
-  const [rooms, setRooms] = useState<RoomInfo[]>([])
-  const [recordingRoomIds, setRecordingRoomIds] = useState<Set<number>>(new Set())
-  const [isLoading, setIsLoading] = useState(true)
   const [roomId, setRoomId] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -28,69 +26,70 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
   const scrollPositionRef = useRef(0)
   const isVisible = usePageVisibility()
 
-  const fetchRooms = useCallback(async (isInitial = false) => {
-    const scrollContainer = scrollContainerRef.current
-    if (scrollContainer && !isInitial) {
-      scrollPositionRef.current = scrollContainer.scrollTop
+  const {
+    data: subscribedRoomIds = [],
+    error: subscribedRoomsError,
+    isLoading: isSubscribedRoomsLoading,
+    mutate: mutateSubscribedRoomIds,
+  } = useSWR<number[]>(
+    isVisible ? 'subscribe/room-ids' : null,
+    () => apiClient.getSubscribedRooms(),
+    {
+      refreshInterval: 5000,
+      revalidateOnFocus: false,
+      fallbackData: [],
     }
-    
-    if (isInitial) {
-      setIsLoading(true)
-    }
-    
-    try {
-      const roomIds = await apiClient.getSubscribedRooms()
-      const validRoomIds = roomIds ?? []
-      
-      if (validRoomIds.length === 0) {
-        setRooms([])
-        setRecordingRoomIds(new Set())
-      } else {
-        // Fetch room info and recording status in parallel
-        const [roomInfos, recordStatuses] = await Promise.all([
-          apiClient.getRoomInfos(validRoomIds),
-          Promise.all(validRoomIds.map(id => 
+  )
+
+  const roomInfoKey =
+    subscribedRoomIds.length > 0 ? `subscribe/details/${subscribedRoomIds.join(',')}` : null
+
+  const {
+    data: details = { roomInfos: {}, recordStatuses: [] },
+    isLoading: isDetailsLoading,
+    mutate: mutateDetails,
+  } = useSWR<{ roomInfos: Record<string, RoomInfo>; recordStatuses: RecordInfo[] }>(
+    roomInfoKey,
+    async () => {
+      const [roomInfos, recordStatuses] = await Promise.all([
+        apiClient.getRoomInfos(subscribedRoomIds),
+        Promise.all(
+          subscribedRoomIds.map((id) =>
             apiClient.getRecordStatus(id).catch(() => ({ room_id: id, status: 'idle' as const }))
-          ))
-        ])
-        
-        // Build set of rooms that are currently recording
-        const recordingIds = new Set(
-          recordStatuses
-            .filter(status => status.status === 'recording')
-            .map(status => status.room_id)
+          )
         )
-        
-        setRecordingRoomIds(recordingIds)
-        
-        // Sort rooms: live streaming (live_status === 1) on top
-        const sortedRooms = Array.isArray(roomInfos) 
-          ? [...roomInfos].sort((a, b) => {
-              if (a.live_status === 1 && b.live_status !== 1) return -1
-              if (a.live_status !== 1 && b.live_status === 1) return 1
-              return 0
-            })
-          : []
-        
-        setRooms(sortedRooms)
-      }
-    } catch (error: any) {
-      console.error('Failed to fetch subscribed rooms:', error)
-      toast.error('無法載入訂閱列表')
-    } finally {
-      setIsLoading(false)
+      ])
+
+      return { roomInfos, recordStatuses }
+    },
+    {
+      refreshInterval: 5000,
+      revalidateOnFocus: false,
+      fallbackData: { roomInfos: {}, recordStatuses: [] },
     }
-  }, [])
+  )
+
+  const recordingRoomIds = useMemo(
+    () => new Set(details.recordStatuses.filter((status) => status.status === 'recording').map((status) => status.room_id)),
+    [details.recordStatuses]
+  )
+
+  const rooms = useMemo(() => {
+    return Object.values(details.roomInfos).sort((a, b) => {
+      if (a.live_status === 1 && b.live_status !== 1) return -1
+      if (a.live_status !== 1 && b.live_status === 1) return 1
+      return 0
+    })
+  }, [details.roomInfos])
+
+  const isLoading = isSubscribedRoomsLoading || (subscribedRoomIds.length > 0 && isDetailsLoading)
 
   useEffect(() => {
-    if (!isVisible) {
-      return
+    if (subscribedRoomsError) {
+      console.error('Failed to fetch subscribed rooms:', subscribedRoomsError)
+      toast.error('無法載入訂閱列表')
     }
-
-    fetchRooms(true)
-    const interval = setInterval(() => fetchRooms(false), 5000)
-    return () => clearInterval(interval)
-  }, [isVisible, fetchRooms])
+  }, [subscribedRoomsError])
 
   useEffect(() => {
     if (scrollContainerRef.current && scrollPositionRef.current > 0) {
@@ -112,7 +111,7 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
       toast.success('已成功訂閱房間')
       setIsDialogOpen(false)
       setRoomId('')
-      fetchRooms()
+      await mutateSubscribedRoomIds()
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to subscribe room:', error)
@@ -132,7 +131,7 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
     try {
       await apiClient.unsubscribeRoom(roomId)
       toast.success('已取消訂閱')
-      fetchRooms()
+      await mutateSubscribedRoomIds()
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to unsubscribe room:', error)
@@ -147,7 +146,7 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
   const handleStartRecord = async (roomId: number) => {
     try {
       await apiClient.startRecord({ roomId })
-      setRecordingRoomIds(prev => new Set([...prev, roomId]))
+      await mutateDetails()
       toast.success('已開始錄製')
       onRefresh?.()
     } catch (error: any) {

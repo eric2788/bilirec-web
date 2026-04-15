@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -11,14 +11,13 @@ import type { RecordTask } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { usePageVisibility } from '@/hooks/use-visibility'
 import { useRole } from '@/lib/role-context'
+import useSWR from 'swr'
 interface RecordsViewProps {
   onRefresh?: () => void
 }
 
 export function RecordsView({ onRefresh }: RecordsViewProps) {
   const { isReadOnly } = useRole()
-  const [tasks, setTasks] = useState<RecordTask[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [roomId, setRoomId] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -26,36 +25,41 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
   const scrollPositionRef = useRef(0)
   const isVisible = usePageVisibility()
 
-  const fetchTasks = useCallback(async (isInitial = false) => {
-    const scrollContainer = scrollContainerRef.current
-    if (scrollContainer && !isInitial) {
-      scrollPositionRef.current = scrollContainer.scrollTop
+  const {
+    data: tasks = [],
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<RecordTask[]>(
+    isVisible ? 'record/tasks' : null,
+    async () => {
+      const recordTasks = await apiClient.getRecordTasks()
+      const roomIds = Array.from(new Set(recordTasks.map((task) => task.roomId)))
+
+      if (roomIds.length === 0) {
+        return recordTasks
+      }
+
+      const roomInfoMap = await apiClient.getRoomInfos(roomIds)
+
+      return recordTasks.map((task) => ({
+        ...task,
+        roomInfo: roomInfoMap[String(task.roomId)],
+      }))
+    },
+    {
+      refreshInterval: 5000,
+      revalidateOnFocus: false,
+      fallbackData: [],
     }
-    
-    if (isInitial) {
-      setIsLoading(true)
-    }
-    
-    try {
-      const data = await apiClient.getRecordTasks()
-      setTasks(data)
-    } catch (error: any) {
-      console.error('Failed to fetch tasks:', error)
-      toast.error('無法載入錄製任務')
-    } finally {
-      setIsLoading(false)
-    }
-  }, [])
+  )
 
   useEffect(() => {
-    if (!isVisible) {
-      return
+    if (error) {
+      console.error('Failed to fetch tasks:', error)
+      toast.error('無法載入錄製任務')
     }
-
-    fetchTasks(true)
-    const interval = setInterval(() => fetchTasks(false), 5000)
-    return () => clearInterval(interval)
-  }, [isVisible, fetchTasks])
+  }, [error])
 
   useEffect(() => {
     if (scrollContainerRef.current && scrollPositionRef.current > 0) {
@@ -77,7 +81,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
       toast.success('已開始錄製')
       setIsDialogOpen(false)
       setRoomId('')
-      fetchTasks()
+      await mutate()
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to start record:', error)
@@ -91,8 +95,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
     try {
       await apiClient.stopRecord(roomId)
       toast.success('已停止錄製')
-      // server will remove the record from the list; refresh
-      fetchTasks()
+      await mutate()
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to stop record:', error)

@@ -19,10 +19,6 @@ class ApiClient {
   private client: AxiosInstance;
   private baseURL: string = "";
 
-  // Simple in-memory cache for room info to reduce expensive requests
-  private roomInfoCache = new Map<number, { data: any; ts: number }>();
-  private ROOM_INFO_TTL = 5 * 60_000; // 5 minutes
-
   constructor() {
     this.client = axios.create({
       timeout: 30000,
@@ -86,9 +82,7 @@ class ApiClient {
   async getRecordTasks(): Promise<RecordTask[]> {
     const ids = await this.getRecords();
 
-    const now = Date.now();
-
-    // For each room ID, fetch status and stats first. Only fetch room info when needed
+    // For each room ID, fetch status and stats.
     const tasks = await Promise.all(
       ids.map(async (id) => {
         // per API, use /record/{id}/status to get status
@@ -102,24 +96,12 @@ class ApiClient {
         const r = await this.client.get<any>(`/record/${id}/stats`);
         const stats = r.data;
 
-        // room meta: cache and fetch only when status is not 'recording'
-        let roomInfo: any = undefined;
-        const cached = this.roomInfoCache.get(id);
-        if (cached && now - cached.ts < this.ROOM_INFO_TTL) {
-          roomInfo = cached.data;
-        } else if (status === "recording") {
-          const rr = await this.client.get<any>(`/room/${id}/info`);
-          roomInfo = rr.data;
-          this.roomInfoCache.set(id, { data: roomInfo, ts: now });
-        }
-
         return {
           roomId: id,
           status,
           fileSize: stats?.bytes_written,
           recordedTime: stats?.elapsed_seconds,
-          startTime: stats?.start_time,
-          roomInfo
+          startTime: stats?.start_time
         } as RecordTask;
       })
     );
@@ -130,14 +112,10 @@ class ApiClient {
   async startRecord(data: StartRecordRequest): Promise<void> {
     const roomId = data.roomId;
     await this.client.post(`/record/${roomId}/start`, {});
-    // invalidate cache for this room so subsequent fetch is fresh
-    this.roomInfoCache.delete(roomId);
   }
 
   async stopRecord(roomId: number): Promise<void> {
     await this.client.post(`/record/${roomId}/stop`, {});
-    // invalidate cache — server is expected to remove record; ensure subsequent fetch is fresh
-    this.roomInfoCache.delete(roomId);
   }
 
   async getFiles(path: string = ""): Promise<RecordFile[]> {
@@ -300,16 +278,10 @@ class ApiClient {
     return response.data;
   }
 
-  async getRoomInfos(roomIds: number[]): Promise<RoomInfo[]> {
+  async getRoomInfos(roomIds: number[]): Promise<Record<string, RoomInfo>> {
     const idsParam = roomIds.join(',');
-    const response = await this.client.get<RoomInfo[] | Record<string, RoomInfo>>(`/room/infos?roomIDs=${idsParam}`);
-    
-    // API returns an object with room IDs as keys, convert to array
-    if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
-      return Object.values(response.data);
-    }
-    
-    return Array.isArray(response.data) ? response.data : [];
+    const response = await this.client.get<Record<string, RoomInfo>>(`/room/infos?roomIDs=${idsParam}`);
+    return response.data ?? {};
   }
 
   async checkLiveStatus(roomId: number): Promise<LiveStatus> {
