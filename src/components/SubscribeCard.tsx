@@ -68,7 +68,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
     }
     if (roomInfo.live_status === 1) {
       return (
-        <Badge className="bg-accent text-accent-foreground">
+        <Badge className="relative overflow-visible bg-accent text-accent-foreground">
           直播中
         </Badge>
       )

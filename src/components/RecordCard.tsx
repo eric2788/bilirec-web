@@ -49,8 +49,12 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
     switch (task.status) {
       case 'recording':
         return (
-          <Badge className="bg-accent text-accent-foreground animate-pulse-glow">
+          <Badge className="relative overflow-visible bg-accent text-accent-foreground">
             錄製中
+            <span className="pointer-events-none absolute -right-1 -top-1 flex size-2.5" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-red-500" />
+            </span>
           </Badge>
         )
       case 'recovering':
