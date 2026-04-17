@@ -3,28 +3,17 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { PlayIcon, UserIcon, TrashIcon, ArrowSquareOutIcon } from '@phosphor-icons/react'
+import { PlayIcon, UserIcon, TrashIcon, ArrowSquareOutIcon, ClockIcon, CopySimpleIcon } from '@phosphor-icons/react'
 import type { RoomInfo } from '@/lib/types'
 import { useRole } from '@/lib/role-context'
+import { getLiveTimeMeta, normalizeText } from '@/lib/utils'
+import { toast } from 'sonner'
 
 interface SubscribeCardProps {
   roomInfo: RoomInfo
   isRecording?: boolean
   onUnsubscribe: (roomId: number) => Promise<void>
   onStartRecord: (roomId: number) => Promise<void>
-}
-
-const normalizeText = (value?: string) => {
-  if (!value) return ''
-
-  return value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/\s+/g, ' ')
-    .trim()
 }
 
 export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, onStartRecord }: SubscribeCardProps) {
@@ -34,6 +23,16 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
   const [isStartRecordDialogOpen, setIsStartRecordDialogOpen] = useState(false)
   const cleanTitle = normalizeText(roomInfo.title) || '載入中...'
   const cleanDescription = normalizeText(roomInfo.description)
+  const liveTimeMeta = getLiveTimeMeta(roomInfo.live_time)
+
+  const handleCopyRoomId = async () => {
+    try {
+      await navigator.clipboard.writeText(String(roomInfo.room_id))
+      toast.success(`已複製 直播間 ID: ${roomInfo.room_id}`, { position: 'bottom-center' })
+    } catch {
+      toast.error('複製 直播間 ID 失敗', { position: 'bottom-center' })
+    }
+  }
 
   const confirmUnsubscribe = async () => {
     setIsUnsubDialogOpen(false)
@@ -69,7 +68,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
     }
     if (roomInfo.live_status === 1) {
       return (
-        <Badge className="bg-accent text-accent-foreground animate-pulse-glow">
+        <Badge className="bg-accent text-accent-foreground">
           直播中
         </Badge>
       )
@@ -104,12 +103,37 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
             <div className="flex flex-col flex-1 min-w-0 w-full">
               <div className="flex items-start gap-3 w-full">
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-card-foreground truncate">
-                    {roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}
-                  </p>
+                  <div className="inline-flex max-w-full items-center gap-1.5">
+                    <p className="font-semibold text-card-foreground truncate max-w-full">
+                      {roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                      title={`複製 直播間 ID: ${roomInfo.room_id}`}
+                      aria-label={`複製 直播間 ID ${roomInfo.room_id}`}
+                      onClick={handleCopyRoomId}
+                    >
+                      <CopySimpleIcon size={12} />
+                    </Button>
+                  </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 leading-5 wrap-break-word">
                     {cleanTitle}
                   </p>
+                  {liveTimeMeta && roomInfo.live_status === 1 && (
+                    <div className="mt-1">
+                      <Badge
+                        variant="outline"
+                        className="border-accent/40 bg-accent/10 text-accent"
+                        title={`開播時間: ${liveTimeMeta.title}`}
+                      >
+                        <ClockIcon size={14} weight="bold" />
+                        {liveTimeMeta.relativeLabel}
+                      </Badge>
+                    </div>
+                  )}
                 </div>
 
                 {/* Desktop: Show online count and status badge */}

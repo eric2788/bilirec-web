@@ -3,10 +3,11 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { PlayIcon, StopIcon, UserIcon, ClockIcon, DatabaseIcon, ArrowSquareOutIcon } from '@phosphor-icons/react'
-import { formatFileSize, formatDuration, cn } from '@/lib/utils'
+import { StopIcon, UserIcon, ClockIcon, DatabaseIcon, ArrowSquareOutIcon, CopySimpleIcon } from '@phosphor-icons/react'
+import { formatFileSize, formatDuration } from '@/lib/utils'
 import type { RecordTask } from '@/lib/types'
 import { useRole } from '@/lib/role-context'
+import { toast } from 'sonner'
 
 interface RecordCardProps {
   task: RecordTask
@@ -17,6 +18,16 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
   const { isReadOnly } = useRole()
   const [isLoading, setIsLoading] = useState(false)
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false)
+  const roomId = task.roomInfo?.room_id ?? task.roomId
+
+  const handleCopyRoomId = async () => {
+    try {
+      await navigator.clipboard.writeText(String(roomId))
+      toast.success(`已複製 直播間 ID: ${roomId}`, { position: 'bottom-center' })
+    } catch {
+      toast.error('複製 直播間 ID 失敗', { position: 'bottom-center' })
+    }
+  }
 
   const confirmStop = async () => {
     setIsStopDialogOpen(false)
@@ -80,9 +91,22 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
             <div className="flex flex-col flex-1 min-w-0">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="font-semibold text-card-foreground record-title truncate">
-                    { task.roomInfo?.uname ?? `直播間 ${task.roomInfo?.room_id}`}
-                  </p>
+                  <div className="inline-flex max-w-full items-center gap-1.5">
+                    <p className="font-semibold text-card-foreground record-title truncate max-w-full">
+                      { task.roomInfo?.uname ?? `直播間 ${task.roomInfo?.room_id}`}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                      title={`複製 直播間 ID: ${roomId}`}
+                      aria-label={`複製 直播間 ID ${roomId}`}
+                      onClick={handleCopyRoomId}
+                    >
+                      <CopySimpleIcon size={12} />
+                    </Button>
+                  </div>
                   <p className="text-sm text-muted-foreground truncate">
                     {task.roomInfo?.title || '載入中...'}
                   </p>
