@@ -83,6 +83,7 @@ export interface ApiError {
 }
 
 export interface ConvertQueue {
+  provider?: 'ffmpeg' | 'cloudconvert'
   task_id: string
   input_path: string
   output_path: string
