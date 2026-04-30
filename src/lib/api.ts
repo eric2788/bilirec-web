@@ -8,11 +8,16 @@ import type {
   ConvertQueue,
   ShareFileInfo,
   RoomInfo,
+  RoomConfig,
   LiveStatus,
   SubscriptionStatus,
   SubscribedRooms,
   DiskUsage,
-  LoginResponse
+  LoginResponse,
+  UpdateRoomConfigRequest,
+  WebPushPublicKeyResponse,
+  WebPushSubscriptionRequest,
+  WebPushUnsubscribeRequest
 } from "./types";
 
 class ApiClient {
@@ -316,6 +321,29 @@ class ApiClient {
   async getDiskUsage(): Promise<DiskUsage> {
     const response = await this.client.get<DiskUsage>('/files/disk-space');
     return response.data;
+  }
+
+  async getRoomConfig(roomId: number): Promise<RoomConfig> {
+    const response = await this.client.get<RoomConfig>(`/room/${roomId}/config`);
+    return response.data;
+  }
+
+  async updateRoomConfig(roomId: number, data: UpdateRoomConfigRequest): Promise<RoomConfig> {
+    const response = await this.client.put<RoomConfig>(`/room/${roomId}/config`, data);
+    return response.data;
+  }
+
+  async getWebPushPublicKey(): Promise<WebPushPublicKeyResponse> {
+    const response = await this.client.get<WebPushPublicKeyResponse>('/notify/public-key');
+    return response.data;
+  }
+
+  async registerWebPushSubscription(data: WebPushSubscriptionRequest): Promise<void> {
+    await this.client.post('/notify/subscribe', data);
+  }
+
+  async removeWebPushSubscription(data: WebPushUnsubscribeRequest): Promise<void> {
+    await this.client.delete('/notify/subscribe', { data });
   }
 
 }

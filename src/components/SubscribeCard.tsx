@@ -3,10 +3,11 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { PlayIcon, UserIcon, TrashIcon, ArrowSquareOutIcon, ClockIcon, CopySimpleIcon } from '@phosphor-icons/react'
+import { PlayIcon, UserIcon, TrashIcon, ArrowSquareOutIcon, ClockIcon, CopySimpleIcon, GearSixIcon } from '@phosphor-icons/react'
 import type { RoomInfo } from '@/lib/types'
 import { useRole } from '@/lib/role-context'
 import { getLiveTimeMeta, normalizeText } from '@/lib/utils'
+import { RoomConfigDialog } from '@/components/RoomConfigDialog'
 import { toast } from 'sonner'
 
 interface SubscribeCardProps {
@@ -21,6 +22,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
   const [isLoading, setIsLoading] = useState(false)
   const [isUnsubDialogOpen, setIsUnsubDialogOpen] = useState(false)
   const [isStartRecordDialogOpen, setIsStartRecordDialogOpen] = useState(false)
+  const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false)
   const cleanTitle = normalizeText(roomInfo.title) || '載入中...'
   const cleanDescription = normalizeText(roomInfo.description)
   const liveTimeMeta = getLiveTimeMeta(roomInfo.live_time)
@@ -81,7 +83,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
   }
 
   return (
-    <Card className="h-full p-4 transition-all hover:shadow-lg">
+    <Card className="subscribe-card h-full p-4 transition-all hover:shadow-lg">
       <div className="flex h-full flex-col gap-3">
         <div className="relative grow">
           <div className="flex flex-col sm:flex-row items-start gap-3">
@@ -103,21 +105,36 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
             <div className="flex flex-col flex-1 min-w-0 w-full">
               <div className="flex items-start gap-3 w-full">
                 <div className="min-w-0 flex-1">
-                  <div className="inline-flex max-w-full items-center gap-1.5">
-                    <p className="font-semibold text-card-foreground truncate max-w-full">
-                      {roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-                      title={`複製 直播間 ID: ${roomInfo.room_id}`}
-                      aria-label={`複製 直播間 ID ${roomInfo.room_id}`}
-                      onClick={handleCopyRoomId}
-                    >
-                      <CopySimpleIcon size={12} />
-                    </Button>
+                  <div className="flex max-w-full items-center gap-1.5">
+                    <div className="min-w-0 flex items-center gap-1.5">
+                      <p className="font-semibold text-card-foreground truncate max-w-[13.5rem] sm:max-w-[15rem] lg:max-w-[17rem]">
+                        {roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}
+                      </p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
+                        title={`複製 直播間 ID: ${roomInfo.room_id}`}
+                        aria-label={`複製 直播間 ID ${roomInfo.room_id}`}
+                        onClick={handleCopyRoomId}
+                      >
+                        <CopySimpleIcon size={12} />
+                      </Button>
+                    </div>
+                    {!isReadOnly && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="ml-auto size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground sm:hidden"
+                        title="房間配置"
+                        aria-label={`打開直播間 ${roomInfo.room_id} 的房間配置`}
+                        onClick={() => setIsConfigDialogOpen(true)}
+                      >
+                        <GearSixIcon size={12} />
+                      </Button>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 leading-5 wrap-break-word">
                     {cleanTitle}
@@ -180,13 +197,13 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-col sm:flex-row gap-2 w-full mt-auto">
+        <div className="subscribe-card-actions flex flex-col sm:flex-row gap-2 w-full mt-auto">
           {roomInfo.live_status === 1 && (
             <>
               <Button
                 asChild
                 variant="default"
-                className="w-full sm:flex-1 transition-all hover:shadow-lg"
+                className="subscribe-card-action-btn w-full sm:flex-1 transition-all hover:shadow-lg"
               >
                 <a
                   href={`https://live.bilibili.com/${roomInfo.room_id}`}
@@ -202,7 +219,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
               <Button
                 onClick={handleStartRecord}
                 disabled={isLoading || isRecording}
-                className="w-full sm:flex-1 transition-all bg-emerald-500 text-white hover:bg-emerald-400 hover:shadow-lg disabled:bg-emerald-500/50"
+                className="subscribe-card-action-btn w-full sm:flex-1 transition-all bg-emerald-500 text-white hover:bg-emerald-400 hover:shadow-lg disabled:bg-emerald-500/50"
                 variant="default"
               >
                 <PlayIcon size={20} />
@@ -213,15 +230,29 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
           )}
 
           {!isReadOnly && (
-          <Button
-            onClick={() => setIsUnsubDialogOpen(true)}
-            disabled={isLoading}
-            variant="destructive"
-            className="w-full sm:flex-1 transition-all bg-red-600 text-white hover:bg-red-500 hover:shadow-lg"
-          >
-            <TrashIcon size={18} />
-            取消訂閱
-          </Button>
+            <>
+              <Button
+                onClick={() => setIsUnsubDialogOpen(true)}
+                disabled={isLoading}
+                variant="destructive"
+                className="subscribe-card-action-btn w-full sm:flex-1 transition-all bg-red-600 text-white hover:bg-red-500 hover:shadow-lg"
+              >
+                <TrashIcon size={18} />
+                取消訂閱
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="subscribe-card-gear-desktop hidden sm:inline-flex sm:size-10 shrink-0 sm:ml-auto"
+                title="房間配置"
+                aria-label={`打開直播間 ${roomInfo.room_id} 的房間配置`}
+                onClick={() => setIsConfigDialogOpen(true)}
+              >
+                <GearSixIcon size={16} />
+              </Button>
+            </>
           )}
         </div>
 
@@ -262,6 +293,12 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <RoomConfigDialog
+          roomInfo={roomInfo}
+          open={isConfigDialogOpen}
+          onOpenChange={setIsConfigDialogOpen}
+        />
       </div>
     </Card>
   )

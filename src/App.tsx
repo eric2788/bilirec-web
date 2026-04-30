@@ -12,11 +12,22 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { SignOutIcon, SunIcon, MoonIcon } from '@phosphor-icons/react'
 import { apiClient } from '@/lib/api'
+import { startLiveNotifications, stopLiveNotifications } from '@/lib/notifications'
 import { storage } from '@/lib/storage'
 import { toast, Toaster } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DiskUsage, LoginResponse } from '@/lib/types'
 import { RoleContext } from '@/lib/role-context'
+
+type AppTab = 'records' | 'files' | 'converts' | 'subscribe'
+
+function getTabFromSearch(search: string): AppTab | null {
+  const params = new URLSearchParams(search)
+  const tab = params.get('tab')
+  return tab === 'records' || tab === 'files' || tab === 'converts' || tab === 'subscribe'
+    ? tab
+    : null
+}
 
 function App() {
   const { theme, setTheme, resolvedTheme } = useTheme()
@@ -26,7 +37,7 @@ function App() {
 
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [activeTab, setActiveTab] = useState<'records' | 'files' | 'converts' | 'subscribe'>('records')
+  const [activeTab, setActiveTab] = useState<AppTab>('records')
   const [diskUsage, setDiskUsage] = useState<DiskUsage | null>(null)
   const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('user-role') ?? 'admin')
   const [userName, setUserName] = useState<string>(() => localStorage.getItem('user-name') ?? '')
@@ -59,25 +70,49 @@ function App() {
 
     checkAuth()
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((error) => {
-        console.error('Service Worker registration failed:', error)
-      })
-    }
-
     const onUnauthorized = () => {
-      if (!isAuthenticated) return // Ignore if we're still checking auth on initial load or already unauthenticated
       setIsAuthenticated(false)
       setIsCheckingAuth(false)
       localStorage.removeItem('user-role')
       localStorage.removeItem('user-name')
       setUserRole('admin')
       setUserName('')
+      stopLiveNotifications().catch((error) => {
+        console.error('Failed to stop live notifications after unauthorized:', error)
+      })
       toast.error('會話逾期，請重新登入') // or localized message you prefer
     }
 
     window.addEventListener('api:unauthorized', onUnauthorized)
     return () => window.removeEventListener('api:unauthorized', onUnauthorized)
+  }, [])
+
+  useEffect(() => {
+    const tabFromUrl = getTabFromSearch(window.location.search)
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) {
+      return
+    }
+
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      const data = event.data || {}
+      if (data.type !== 'notification-click') {
+        return
+      }
+
+      const tab = data.tab
+      if (tab === 'subscribe') {
+        setActiveTab('subscribe')
+      }
+    }
+
+    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage)
+    return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
   }, [])
 
   // Refresh disk usage every 30 seconds when authenticated
@@ -99,6 +134,52 @@ function App() {
     return () => clearInterval(interval)
   }, [isAuthenticated])
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      return
+    }
+
+    if (userRole === 'viewer') {
+      // Viewer role should not receive web push notifications; clean up any existing subscription
+      stopLiveNotifications().catch((error) => {
+        console.error('Failed to remove viewer push subscription:', error)
+      })
+      return
+    }
+
+    let cancelled = false
+
+    const bootstrapNotifications = async () => {
+      try {
+        const result = await startLiveNotifications()
+        if (cancelled) {
+          return
+        }
+
+        if (result === 'permission-denied') {
+          toast.error('瀏覽器通知已被封鎖，無法接收直播提醒')
+        } else if (result === 'push-unavailable') {
+          toast.error('Web Push 設定失敗，請檢查伺服器推播設定後重試')
+        } else if (result === 'worker-unavailable') {
+          toast.error('通知服務啓動失敗，請重新整理後再試')
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Failed to start live notifications:', error)
+          toast.error('初始化直播通知失敗')
+        }
+      }
+    }
+
+    bootstrapNotifications().catch((error) => {
+      console.error('Unexpected bootstrapNotifications rejection:', error)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [isAuthenticated, userRole])
+
   const handleLoginSuccess = (response: LoginResponse) => {
     const role = response.role || 'admin'
     const user = response.user || ''
@@ -118,6 +199,7 @@ function App() {
     try {
       // Notify server to clear HttpOnly cookie
       await apiClient.logout()
+      await stopLiveNotifications()
       setIsAuthenticated(false)
       localStorage.removeItem('user-role')
       localStorage.removeItem('user-name')

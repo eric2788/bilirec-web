@@ -46,7 +46,9 @@ export function DiskUsageDisplay({ diskUsage, compact = false }: DiskUsageDispla
           onClick={() => setIsOpen(true)}
           className="flex lg:hidden items-center gap-2 px-3 py-1.5 rounded-md bg-secondary/50 hover:bg-secondary/70 transition-colors cursor-pointer active:scale-95"
         >
-          <HardDrivesIcon size={16} className="text-muted-foreground" />
+          <span className="text-muted-foreground">
+            <HardDrivesIcon size={16} />
+          </span>
           <span className="text-xs font-semibold text-muted-foreground whitespace-nowrap">
             {usagePercent}%
           </span>
@@ -56,7 +58,9 @@ export function DiskUsageDisplay({ diskUsage, compact = false }: DiskUsageDispla
           <DialogContent className="w-[90vw] max-w-sm">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <HardDrivesIcon size={20} className="text-muted-foreground" />
+                <span className="text-muted-foreground">
+                  <HardDrivesIcon size={20} />
+                </span>
                 磁碟空間
               </DialogTitle>
             </DialogHeader>
@@ -100,7 +104,9 @@ export function DiskUsageDisplay({ diskUsage, compact = false }: DiskUsageDispla
         <TooltipTrigger asChild>
           <div className="w-full space-y-2">
             <div className="flex items-center gap-2">
-              <HardDrivesIcon size={16} className="text-muted-foreground shrink-0" />
+              <span className="text-muted-foreground shrink-0">
+                <HardDrivesIcon size={16} />
+              </span>
               <span className="text-xs font-semibold text-muted-foreground">
                 {usagePercent}% ({usedFormatted} / {totalFormatted})
               </span>

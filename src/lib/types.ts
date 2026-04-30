@@ -105,8 +105,38 @@ export interface LiveStatus {
   live_status: number
 }
 
+export interface RoomConfig {
+  room_id: number
+  auto_record: boolean
+  notify: boolean
+}
+
+export interface UpdateRoomConfigRequest {
+  auto_record: boolean
+  notify: boolean
+}
+
 export interface DiskUsage {
   total: number
   used: number
   free: number
+}
+
+export interface WebPushKeys {
+  auth: string
+  p256dh: string
+}
+
+export interface WebPushPublicKeyResponse {
+  enabled: boolean
+  public_key: string
+}
+
+export interface WebPushSubscriptionRequest {
+  endpoint: string
+  keys: WebPushKeys
+}
+
+export interface WebPushUnsubscribeRequest {
+  endpoint: string
 }
