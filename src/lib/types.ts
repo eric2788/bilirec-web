@@ -86,6 +86,7 @@ export interface ConvertQueue {
   provider?: 'ffmpeg' | 'cloudconvert'
   task_id: string
   input_path: string
+  input_file_size?: number
   output_path: string
   input_format: string
   output_format: string

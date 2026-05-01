@@ -9,6 +9,7 @@ import type { ConvertQueue } from '@/lib/types'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import { useRole } from '@/lib/role-context'
+import { formatFileSize } from "@/lib/utils";
 
 interface ConvertCardProps {
   task: ConvertQueue
@@ -69,16 +70,19 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
               <p className="text-sm text-muted-foreground wrap-break-word sm:truncate">{task.input_path}</p>
             </div>
             <div className="flex items-center gap-2 flex-wrap mt-2 sm:mt-0">
+              {task.input_file_size !== undefined && (
+                <Badge variant="outline" className="shrink-0 text-sm sm:text-xs">{formatFileSize(task.input_file_size)}</Badge>
+              )}
               {task.provider && (
-                <Badge variant="secondary" className="shrink-0 text-sm sm:order-1 sm:text-xs">{task.provider === 'cloudconvert' ? 'CloudConvert' : 'FFmpeg'}</Badge>
+                <Badge variant="secondary" className="shrink-0 text-sm sm:text-xs">{task.provider === 'cloudconvert' ? 'CloudConvert' : 'FFmpeg'}</Badge>
               )}
               {task.delete_source && (
-                <Badge variant="destructive" className="shrink-0 text-sm sm:order-2 sm:text-xs border border-transparent">轉後刪源</Badge>
+                <Badge variant="destructive" className="shrink-0 text-sm sm:text-xs border border-transparent">轉後刪源</Badge>
               )} 
-              <Badge variant="outline" className="shrink-0 text-sm sm:order-3 sm:text-xs ring-[0.2px] ring-gray-900 dark:ring-gray-200">{task.input_format.toUpperCase()} → {task.output_format.toUpperCase()}</Badge>
+              <Badge variant="outline" className="shrink-0 text-sm sm:text-xs ring-[0.2px] ring-gray-900 dark:ring-gray-200">{task.input_format.toUpperCase()} → {task.output_format.toUpperCase()}</Badge>
               {/* Desktop: show cancel button */}
               {!isReadOnly && (
-              <div className="hidden sm:inline-flex order-3">
+              <div className="hidden sm:inline-flex">
                 <Button
                   size="icon"
                   variant="destructive-ghost"
