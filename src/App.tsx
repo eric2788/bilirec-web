@@ -101,19 +101,35 @@ function App() {
 
     const handleServiceWorkerMessage = (event: MessageEvent) => {
       const data = event.data || {}
-      if (data.type !== 'notification-click') {
+
+      if (data.type === 'notification-click') {
+        const tab = data.tab
+        if (tab === 'subscribe') {
+          setActiveTab('subscribe')
+        }
         return
       }
 
-      const tab = data.tab
-      if (tab === 'subscribe') {
-        setActiveTab('subscribe')
+      if (data.type === 'push-resubscribe-required') {
+        if (!isAuthenticated || userRole === 'viewer') {
+          return
+        }
+
+        startLiveNotifications()
+          .then((result) => {
+            if (result === 'push-unavailable' || result === 'worker-unavailable') {
+              console.error('Silent push re-subscribe failed:', result)
+            }
+          })
+          .catch((error) => {
+            console.error('Silent push re-subscribe threw:', error)
+          })
       }
     }
 
     navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage)
     return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
-  }, [])
+  }, [isAuthenticated, userRole])
 
   // Refresh disk usage every 30 seconds when authenticated
   useEffect(() => {
@@ -159,14 +175,13 @@ function App() {
         if (result === 'permission-denied') {
           toast.error('瀏覽器通知已被封鎖，無法接收直播提醒')
         } else if (result === 'push-unavailable') {
-          toast.error('Web Push 設定失敗，請檢查伺服器推播設定後重試')
+          console.error('Web Push bootstrap failed: push-unavailable')
         } else if (result === 'worker-unavailable') {
-          toast.error('通知服務啓動失敗，請重新整理後再試')
+          console.error('Web Push bootstrap failed: worker-unavailable')
         }
       } catch (error) {
         if (!cancelled) {
           console.error('Failed to start live notifications:', error)
-          toast.error('初始化直播通知失敗')
         }
       }
     }
