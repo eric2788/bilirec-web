@@ -59,7 +59,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
         )
       case 'recovering':
         return (
-          <Badge variant="outline" className="border-accent text-accent">
+          <Badge variant="outline" className="border-accent text-accent animate-pulse">
             恢復中
           </Badge>
         )
