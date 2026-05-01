@@ -245,7 +245,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                 type="button"
                 variant="outline"
                 size="icon"
-                className="subscribe-card-gear-desktop hidden sm:inline-flex sm:size-10 shrink-0 sm:ml-auto"
+                className="subscribe-card-gear-desktop hidden sm:inline-flex shrink-0 sm:ml-auto"
                 title="房間配置"
                 aria-label={`打開直播間 ${roomInfo.room_id} 的房間配置`}
                 onClick={() => setIsConfigDialogOpen(true)}
