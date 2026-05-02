@@ -13,6 +13,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'prompt',
+      scope: '/',
       injectRegister: false,
       manifest: {
         name: 'Bilibili 錄製管理系統',

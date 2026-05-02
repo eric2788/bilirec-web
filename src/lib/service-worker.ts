@@ -31,8 +31,11 @@ export async function getServiceWorkerRegistration(): Promise<ServiceWorkerRegis
   // If already registered, return the ready promise
   const existing = await navigator.serviceWorker.getRegistration('/sw.js')
   if (existing) {
-    await existing.update() // force check for updates
-    return navigator.serviceWorker.ready
+     // Fire-and-forget update check — don't let a network failure block push subscription
+     existing.update().catch((err) => {
+      console.warn('[SW] background update check failed:', err)
+     })
+     return navigator.serviceWorker.ready
   }
 
   await navigator.serviceWorker.register('/sw.js', {

@@ -61,10 +61,24 @@ export async function startLiveNotifications(): Promise<NotificationBootstrapRes
 
     let subscription = await registration.pushManager.getSubscription()
     if (!subscription) {
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: base64ToUint8Array(config.public_key),
-      })
+      try {
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64ToUint8Array(config.public_key),
+        })
+      } catch (subscribeError) {
+        // Chrome can leave the push manager in a broken state after a PWA data reset.
+        // Unsubscribe any stale local state and retry once.
+        console.warn('Push subscribe failed, retrying after unsubscribe:', subscribeError)
+        const stale = await registration.pushManager.getSubscription()
+        if (stale) {
+          await stale.unsubscribe().catch(() => {})
+        }
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: base64ToUint8Array(config.public_key),
+        })
+      }
     }
 
     const json = subscription.toJSON()
@@ -86,7 +100,8 @@ export async function startLiveNotifications(): Promise<NotificationBootstrapRes
 
     return 'started'
   } catch (error) {
-    console.error('Failed to sync Web Push subscription:', error)
+    const message = error instanceof Error ? error.message : String(error)
+    console.error('Failed to sync Web Push subscription:', message, error)
     return 'push-unavailable'
   }
 }

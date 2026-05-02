@@ -19,6 +19,7 @@ import type {
   WebPushSubscriptionRequest,
   WebPushUnsubscribeRequest
 } from "./types";
+import { sharedStore } from "./shared-store";
 
 class ApiClient {
   private client: AxiosInstance;
@@ -48,6 +49,8 @@ class ApiClient {
   setBaseURL(url: string) {
     this.baseURL = url;
     this.client.defaults.baseURL = url;
+    // Persist to IndexedDB so the service worker can use the correct origin for push endpoints
+    sharedStore.set("server-url", url).catch(() => {});
   }
 
   getBaseURL(): string {

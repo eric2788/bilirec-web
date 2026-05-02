@@ -1,323 +1,347 @@
-import { useState, useEffect } from 'react'
-import { useTheme } from 'next-themes'
-import { LoginView } from '@/components/LoginView'
-import { RecordsView } from '@/components/RecordsView'
-import { FilesView } from '@/components/FilesView'
-import { ConvertsView } from '@/components/ConvertsView'
-import { SubscribesView } from '@/components/SubscribesView'
-import { BottomNav } from '@/components/BottomNav'
-import { LeftSidebar } from '@/components/LeftSidebar'
-import { DiskUsageDisplay } from '@/components/DiskUsageDisplay'
-import { Button } from '@/components/ui/button'
-import { SignOutIcon, SunIcon, MoonIcon } from '@phosphor-icons/react'
-import { apiClient } from '@/lib/api'
-import { startLiveNotifications, stopLiveNotifications } from '@/lib/notifications'
-import { registerServiceWorker } from '@/lib/service-worker'
-import { storage } from '@/lib/storage'
-import { toast, Toaster } from 'sonner'
-import { motion, AnimatePresence } from 'framer-motion'
-import type { DiskUsage, LoginResponse } from '@/lib/types'
-import { RoleContext } from '@/lib/role-context'
+import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
+import { LoginView } from "@/components/LoginView";
+import { RecordsView } from "@/components/RecordsView";
+import { FilesView } from "@/components/FilesView";
+import { ConvertsView } from "@/components/ConvertsView";
+import { SubscribesView } from "@/components/SubscribesView";
+import { BottomNav } from "@/components/BottomNav";
+import { LeftSidebar } from "@/components/LeftSidebar";
+import { DiskUsageDisplay } from "@/components/DiskUsageDisplay";
+import { Button } from "@/components/ui/button";
+import { SignOutIcon, SunIcon, MoonIcon } from "@phosphor-icons/react";
+import { apiClient } from "@/lib/api";
+import {
+  startLiveNotifications,
+  stopLiveNotifications
+} from "@/lib/notifications";
+import { registerServiceWorker } from "@/lib/service-worker";
+import { storage } from "@/lib/storage";
+import { toast, Toaster } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+import type { DiskUsage, LoginResponse } from "@/lib/types";
+import { RoleContext } from "@/lib/role-context";
 
-type AppTab = 'records' | 'files' | 'converts' | 'subscribe'
+type AppTab = "records" | "files" | "converts" | "subscribe";
 
 function getTabFromSearch(search: string): AppTab | null {
-  const params = new URLSearchParams(search)
-  const tab = params.get('tab')
-  return tab === 'records' || tab === 'files' || tab === 'converts' || tab === 'subscribe'
+  const params = new URLSearchParams(search);
+  const tab = params.get("tab");
+  return tab === "records" ||
+    tab === "files" ||
+    tab === "converts" ||
+    tab === "subscribe"
     ? tab
-    : null
+    : null;
+}
+
+function getPinnedRoomFromSearch(search: string): number | null {
+  const params = new URLSearchParams(search);
+  const id = Number(params.get("pinnedRoom"));
+  return isNaN(id) || id === 0 ? null : id;
 }
 
 function App() {
-  const { theme, setTheme, resolvedTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
 
-  useEffect(() => setMounted(true), [])
+  useEffect(() => setMounted(true), []);
 
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
-  const [activeTab, setActiveTab] = useState<AppTab>('records')
-  const [diskUsage, setDiskUsage] = useState<DiskUsage | null>(null)
-  const [userRole, setUserRole] = useState<string>(() => localStorage.getItem('user-role') ?? 'admin')
-  const [userName, setUserName] = useState<string>(() => localStorage.getItem('user-name') ?? '')
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [activeTab, setActiveTab] = useState<AppTab>("records");
+  const [pinnedRoomId, setPinnedRoomId] = useState<number | null>(null);
+  const [diskUsage, setDiskUsage] = useState<DiskUsage | null>(null);
+  const [userRole, setUserRole] = useState<string>(
+    () => localStorage.getItem("user-role") ?? "admin"
+  );
+  const [userName, setUserName] = useState<string>(
+    () => localStorage.getItem("user-name") ?? ""
+  );
 
-  const isReadOnly = userRole === 'viewer'
+  const isReadOnly = userRole === "viewer";
+
+  const handleTabChange = (tab: AppTab) => {
+    if (tab !== "subscribe") setPinnedRoomId(null);
+    setActiveTab(tab);
+  };
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const serverUrl = await storage.get<string>('server-url')
+        const serverUrl = await storage.get<string>("server-url");
         if (serverUrl) {
-          apiClient.setBaseURL(serverUrl)
-          await apiClient.getRecords()
-          setIsAuthenticated(true)
+          apiClient.setBaseURL(serverUrl);
+          await apiClient.getRecords();
+          setIsAuthenticated(true);
           // Restore role from localStorage (already initialised in useState)
           // Fetch initial disk usage
           try {
-            const usage = await apiClient.getDiskUsage()
-            setDiskUsage(usage)
+            const usage = await apiClient.getDiskUsage();
+            setDiskUsage(usage);
           } catch (error) {
-            console.error('Failed to fetch disk usage:', error)
+            console.error("Failed to fetch disk usage:", error);
           }
         }
       } catch (error) {
-        console.error('Auth check failed:', error)
+        console.error("Auth check failed:", error);
       } finally {
-        setIsCheckingAuth(false)
+        setIsCheckingAuth(false);
       }
-    }
+    };
 
-    checkAuth()
+    checkAuth();
 
     const onUnauthorized = () => {
-      setIsAuthenticated(false)
-      setIsCheckingAuth(false)
-      localStorage.removeItem('user-role')
-      localStorage.removeItem('user-name')
-      setUserRole('admin')
-      setUserName('')
+      setIsAuthenticated(false);
+      setIsCheckingAuth(false);
+      localStorage.removeItem("user-role");
+      localStorage.removeItem("user-name");
+      setUserRole("admin");
+      setUserName("");
       stopLiveNotifications().catch((error) => {
-        console.error('Failed to stop live notifications after unauthorized:', error)
-      })
-      toast.error('會話逾期，請重新登入') // or localized message you prefer
-    }
+        console.error(
+          "Failed to stop live notifications after unauthorized:",
+          error
+        );
+      });
+      toast.error("會話逾期，請重新登入"); // or localized message you prefer
+    };
 
-    window.addEventListener('api:unauthorized', onUnauthorized)
-    return () => window.removeEventListener('api:unauthorized', onUnauthorized)
-  }, [])
-
-  useEffect(() => {
-    const tabFromUrl = getTabFromSearch(window.location.search)
-    if (tabFromUrl) {
-      setActiveTab(tabFromUrl)
-    }
-  }, [])
+    window.addEventListener("api:unauthorized", onUnauthorized);
+    return () => window.removeEventListener("api:unauthorized", onUnauthorized);
+  }, []);
 
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) {
-      return
-    }
+    const tabFromUrl = getTabFromSearch(window.location.search);
+    if (tabFromUrl) setActiveTab(tabFromUrl);
+    const pinnedRoom = getPinnedRoomFromSearch(window.location.search);
+    if (pinnedRoom) setPinnedRoomId(pinnedRoom);
+  }, []);
 
-    const handleServiceWorkerMessage = (event: MessageEvent) => {
-      const data = event.data || {}
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
 
-      if (data.type === 'notification-click') {
-        const tab = data.tab
-        if (tab === 'subscribe') {
-          setActiveTab('subscribe')
+    const handleMessage = (event: MessageEvent) => {
+      if (
+        event.data?.type === "notification-click" &&
+        event.data.tab === "subscribe"
+      ) {
+        setActiveTab("subscribe");
+        if (typeof event.data.roomId === "number") {
+          setPinnedRoomId(event.data.roomId);
         }
-        return
       }
+    };
 
-      if (data.type === 'push-resubscribe-required') {
-        if (!isAuthenticated || userRole === 'viewer') {
-          return
-        }
-
-        startLiveNotifications()
-          .then((result) => {
-            if (result === 'push-unavailable' || result === 'worker-unavailable') {
-              console.error('Silent push re-subscribe failed:', result)
-            }
-          })
-          .catch((error) => {
-            console.error('Silent push re-subscribe threw:', error)
-          })
-      }
-    }
-
-    navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage)
-    return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
-  }, [isAuthenticated, userRole])
+    navigator.serviceWorker.addEventListener("message", handleMessage);
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", handleMessage);
+  }, []);
 
   // ── Service Worker update lifecycle ──────────────────────
   useEffect(() => {
-    if (!('serviceWorker' in navigator)) {
-      return
+    if (!("serviceWorker" in navigator)) {
+      return;
     }
 
-    let cancelled = false
-    let waitingWorker: ServiceWorker | null = null
+    let cancelled = false;
+    let waitingWorker: ServiceWorker | null = null;
 
     const promptReload = () => {
-      toast('有新版本可用', {
-        description: '已下載更新，重新載入即可套用。',
+      toast("有新版本可用", {
+        description: "已下載更新，重新載入即可套用。",
         duration: Infinity,
         action: {
-          label: '立即更新',
+          label: "立即更新",
           onClick: () => {
             if (waitingWorker) {
-              waitingWorker.postMessage({ type: 'SKIP_WAITING' })
+              waitingWorker.postMessage({ type: "SKIP_WAITING" });
             }
-          },
-        },
-      })
-    }
+          }
+        }
+      });
+    };
 
     const handleControllerChange = () => {
       // New SW took control — reload to get fresh assets
-      window.location.reload()
-    }
+      window.location.reload();
+    };
 
     const setupUpdateListener = (reg: ServiceWorkerRegistration) => {
       // If there's already a waiting worker, prompt immediately
       if (reg.waiting) {
-        waitingWorker = reg.waiting
-        promptReload()
+        waitingWorker = reg.waiting;
+        promptReload();
       }
 
       // Listen for new SW being installed
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing
-        if (!newWorker) return
+      reg.addEventListener("updatefound", () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
 
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+        newWorker.addEventListener("statechange", () => {
+          if (
+            newWorker.state === "installed" &&
+            navigator.serviceWorker.controller
+          ) {
             // New SW installed but waiting — prompt user
-            waitingWorker = newWorker
+            waitingWorker = newWorker;
             if (!cancelled) {
-              promptReload()
+              promptReload();
             }
           }
-        })
-      })
-    }
+        });
+      });
+    };
 
-    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange)
+    navigator.serviceWorker.addEventListener(
+      "controllerchange",
+      handleControllerChange
+    );
 
     // Register SW and set up update detection
-    const regPromise = registerServiceWorker()
+    const regPromise = registerServiceWorker();
     if (regPromise) {
       regPromise.then((reg) => {
-        if (cancelled) return
-        setupUpdateListener(reg)
+        if (cancelled) return;
+        setupUpdateListener(reg);
 
         // Periodically check for updates (every 30 minutes)
         const updateInterval = setInterval(() => {
           reg.update().catch((err) => {
-            console.debug('[SW] update check failed:', err)
-          })
-        }, 30 * 60 * 1000)
+            console.debug("[SW] update check failed:", err);
+          });
+        }, 30 * 60 * 1000);
 
-        return () => clearInterval(updateInterval)
-      })
+        return () => clearInterval(updateInterval);
+      });
     }
 
     return () => {
-      cancelled = true
-      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange)
-    }
-  }, [])
+      cancelled = true;
+      navigator.serviceWorker.removeEventListener(
+        "controllerchange",
+        handleControllerChange
+      );
+    };
+  }, []);
 
   // Refresh disk usage every 30 seconds when authenticated
   useEffect(() => {
-    if (!isAuthenticated) return
+    if (!isAuthenticated) return;
 
     const fetchDiskUsage = async () => {
       try {
-        const usage = await apiClient.getDiskUsage()
-        setDiskUsage(usage)
+        const usage = await apiClient.getDiskUsage();
+        setDiskUsage(usage);
       } catch (error) {
-        console.error('Failed to fetch disk usage:', error)
+        console.error("Failed to fetch disk usage:", error);
       }
-    }
+    };
 
-    fetchDiskUsage()
-    const interval = setInterval(fetchDiskUsage, 30000) // Refresh every 30 seconds
+    fetchDiskUsage();
+    const interval = setInterval(fetchDiskUsage, 30000); // Refresh every 30 seconds
 
-    return () => clearInterval(interval)
-  }, [isAuthenticated])
+    return () => clearInterval(interval);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isAuthenticated) {
-      return
+      return;
     }
 
-    if (userRole === 'viewer') {
+    if (userRole === "viewer") {
       // Viewer role should not receive web push notifications; clean up any existing subscription
       stopLiveNotifications().catch((error) => {
-        console.error('Failed to remove viewer push subscription:', error)
-      })
-      return
+        console.error("Failed to remove viewer push subscription:", error);
+      });
+      return;
     }
 
-    let cancelled = false
+    let cancelled = false;
 
     const bootstrapNotifications = async () => {
       try {
-        const result = await startLiveNotifications()
+        const result = await startLiveNotifications();
         if (cancelled) {
-          return
+          return;
         }
 
-        if (result === 'permission-denied') {
-          toast.error('瀏覽器通知已被封鎖，無法接收直播提醒')
-        } else if (result === 'push-unavailable') {
-          console.error('Web Push bootstrap failed: push-unavailable')
-        } else if (result === 'worker-unavailable') {
-          console.error('Web Push bootstrap failed: worker-unavailable')
+        if (result === "permission-denied") {
+          toast.error("瀏覽器通知已被封鎖，無法接收直播提醒");
+        } else if (result === "push-unavailable") {
+          console.error(
+            "Web Push bootstrap failed: push-unavailable (check console above for details)"
+          );
+        } else if (result === "worker-unavailable") {
+          console.error("Web Push bootstrap failed: worker-unavailable");
         }
       } catch (error) {
         if (!cancelled) {
-          console.error('Failed to start live notifications:', error)
+          console.error("Failed to start live notifications:", error);
         }
       }
-    }
+    };
 
     bootstrapNotifications().catch((error) => {
-      console.error('Unexpected bootstrapNotifications rejection:', error)
-    })
+      console.error("Unexpected bootstrapNotifications rejection:", error);
+    });
 
     return () => {
-      cancelled = true
-    }
-  }, [isAuthenticated, userRole])
+      cancelled = true;
+    };
+  }, [isAuthenticated, userRole]);
 
   const handleLoginSuccess = (response: LoginResponse) => {
-    const role = response.role || 'admin'
-    const user = response.user || ''
-    localStorage.setItem('user-role', role)
-    if (user) localStorage.setItem('user-name', user)
-    setUserRole(role)
-    setUserName(user)
-    setIsAuthenticated(true)
+    const role = response.role || "admin";
+    const user = response.user || "";
+    localStorage.setItem("user-role", role);
+    if (user) localStorage.setItem("user-name", user);
+    setUserRole(role);
+    setUserName(user);
+    setIsAuthenticated(true);
     if (user) {
-      toast.success(`歡迎回來，${user}！`)
+      toast.success(`歡迎回來，${user}！`);
     } else {
-      toast.success('登入成功')
+      toast.success("登入成功");
     }
-  }
+  };
 
   const handleLogout = async () => {
     try {
       // Notify server to clear HttpOnly cookie
-      await apiClient.logout()
-      await stopLiveNotifications()
-      setIsAuthenticated(false)
-      localStorage.removeItem('user-role')
-      localStorage.removeItem('user-name')
-      setUserRole('admin')
-      setUserName('')
-      toast.success('已登出')
+      await apiClient.logout();
+      await stopLiveNotifications();
+      setIsAuthenticated(false);
+      localStorage.removeItem("user-role");
+      localStorage.removeItem("user-name");
+      setUserRole("admin");
+      setUserName("");
+      toast.success("已登出");
     } catch (error) {
-      console.error('Logout failed:', error)
+      console.error("Logout failed:", error);
     }
-  }
+  };
 
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-pulse">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full">
-            <svg className="w-8 h-8 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg
+              className="w-8 h-8 text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
               <circle cx="12" cy="12" r="10" strokeWidth="2" />
               <circle cx="12" cy="12" r="3" fill="currentColor" />
             </svg>
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   if (!isAuthenticated) {
@@ -326,88 +350,108 @@ function App() {
         <LoginView onLoginSuccess={handleLoginSuccess} />
         <Toaster richColors position="top-center" />
       </>
-    )
+    );
   }
-
 
   return (
     <RoleContext.Provider value={{ role: userRole, userName, isReadOnly }}>
-    <div className="min-h-screen bg-background overflow-x-hidden">
-      <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-              <svg className="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                <circle cx="12" cy="12" r="3" fill="currentColor" />
-              </svg>
+      <div className="min-h-screen bg-background overflow-x-hidden">
+        <div className="sticky top-0 z-40 bg-card/95 backdrop-blur-md border-b border-border">
+          <div className="flex items-center justify-between p-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <svg
+                  className="w-5 h-5 text-primary"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                  <circle cx="12" cy="12" r="3" fill="currentColor" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="font-bold text-lg leading-none mb-1 text-card-foreground">
+                  BiliRec
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  Bilibili 直播錄製系統
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-bold text-lg leading-none mb-1 text-card-foreground">BiliRec</h1>
-              <p className="text-xs text-muted-foreground">Bilibili 直播錄製系統</p>
+
+            <div className="flex items-center gap-2">
+              <DiskUsageDisplay diskUsage={diskUsage} compact={true} />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
+                aria-label="切換主題"
+                onClick={() => {
+                  const active = resolvedTheme || theme || "light";
+                  setTheme(active === "dark" ? "light" : "dark");
+                }}
+              >
+                {mounted ? (
+                  (resolvedTheme || theme) === "dark" ? (
+                    <SunIcon size={18} />
+                  ) : (
+                    <MoonIcon size={18} />
+                  )
+                ) : (
+                  <SunIcon size={18} />
+                )}
+              </Button>
+
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="shrink-0 text-card-foreground hover:text-destructive rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
+                aria-label="登出"
+              >
+                <SignOutIcon size={20} />
+              </Button>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <DiskUsageDisplay diskUsage={diskUsage} compact={true} />
-            <Button
-              variant="ghost"
-              size="sm"
-              className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
-              aria-label="切換主題"
-              onClick={() => {
-                const active = resolvedTheme || theme || 'light'
-                setTheme(active === 'dark' ? 'light' : 'dark')
-              }}
-            >
-              {mounted ? ((resolvedTheme || theme) === 'dark' ? <SunIcon size={18} /> : <MoonIcon size={18} />) : <SunIcon size={18} />}
-            </Button>
+        <div className="h-[calc(100vh-73px)] overflow-x-hidden flex">
+          <LeftSidebar
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+            diskUsage={diskUsage}
+          />
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleLogout}
-              className="shrink-0 text-card-foreground hover:text-destructive rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
-              aria-label="登出"
-            >
-              <SignOutIcon size={20} />
-            </Button>
+          <div className="flex-1">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+                className="h-full"
+              >
+                {activeTab === "records" ? (
+                  <RecordsView />
+                ) : activeTab === "files" ? (
+                  <FilesView />
+                ) : activeTab === "converts" ? (
+                  <ConvertsView />
+                ) : (
+                  <SubscribesView pinnedRoomId={pinnedRoomId} />
+                )}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
+
+        <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+        <Toaster richColors position="top-center" />
       </div>
-
-      <div className="h-[calc(100vh-73px)] overflow-x-hidden flex">
-        <LeftSidebar activeTab={activeTab} onTabChange={setActiveTab} diskUsage={diskUsage} />
-
-        <div className="flex-1">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={activeTab}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
-              className="h-full"
-            >
-              {activeTab === 'records' ? (
-                <RecordsView />
-              ) : activeTab === 'files' ? (
-                <FilesView />
-              ) : activeTab === 'converts' ? (
-                <ConvertsView />
-              ) : (
-                <SubscribesView />
-              )}
-            </motion.div>
-          </AnimatePresence>
-        </div>
-      </div>
-
-      <BottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-      <Toaster richColors position="top-center" />
-    </div>
     </RoleContext.Provider>
-  )
+  );
 }
 
-export default App
+export default App;

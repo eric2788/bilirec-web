@@ -15,9 +15,10 @@ import useSWR from 'swr'
 
 interface SubscribesViewProps {
   onRefresh?: () => void
+  pinnedRoomId?: number | null
 }
 
-export function SubscribesView({ onRefresh }: SubscribesViewProps) {
+export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps) {
   const { isReadOnly } = useRole()
   const [roomId, setRoomId] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -76,11 +77,15 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
 
   const rooms = useMemo(() => {
     return Object.values(details.roomInfos).sort((a, b) => {
+      if (pinnedRoomId !== undefined && pinnedRoomId !== null) {
+        if (a.room_id === pinnedRoomId) return -1
+        if (b.room_id === pinnedRoomId) return 1
+      }
       if (a.live_status === 1 && b.live_status !== 1) return -1
       if (a.live_status !== 1 && b.live_status === 1) return 1
       return 0
     })
-  }, [details.roomInfos])
+  }, [details.roomInfos, pinnedRoomId])
 
   const isLoading = isSubscribedRoomsLoading || (subscribedRoomIds.length > 0 && isDetailsLoading)
 
@@ -92,10 +97,13 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
   }, [subscribedRoomsError])
 
   useEffect(() => {
-    if (scrollContainerRef.current && scrollPositionRef.current > 0) {
+    if (!scrollContainerRef.current) return
+    if (pinnedRoomId != null) {
+      scrollContainerRef.current.scrollTop = 0
+    } else if (scrollPositionRef.current > 0) {
       scrollContainerRef.current.scrollTop = scrollPositionRef.current
     }
-  }, [rooms])
+  }, [rooms, pinnedRoomId])
 
   const handleSubscribe = async () => {
     const id = parseInt(roomId.trim())
@@ -210,16 +218,24 @@ export function SubscribesView({ onRefresh }: SubscribesViewProps) {
           />
         ) : (
           <div className="cards-grid grid gap-4 w-full">
-            {rooms.map((room) => (
-              <div key={room.room_id} className="w-full">
-                <SubscribeCard
-                  roomInfo={room}
-                  isRecording={recordingRoomIds.has(room.room_id)}
-                  onUnsubscribe={handleUnsubscribe}
-                  onStartRecord={handleStartRecord}
-                />
-              </div>
-            ))}
+            {rooms.map((room) => {
+              const isPinned = room.room_id === pinnedRoomId
+              return (
+                <div
+                  key={room.room_id}
+                  className={`w-full rounded-lg transition-shadow duration-300 ${
+                    isPinned ? 'ring-2 ring-primary shadow-md' : ''
+                  }`}
+                >
+                  <SubscribeCard
+                    roomInfo={room}
+                    isRecording={recordingRoomIds.has(room.room_id)}
+                    onUnsubscribe={handleUnsubscribe}
+                    onStartRecord={handleStartRecord}
+                  />
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
