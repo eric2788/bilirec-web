@@ -69,9 +69,9 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
               <p className="font-semibold text-lg text-card-foreground wrap-break-word">{baseInput}</p>
               <p className="text-sm text-muted-foreground wrap-break-word sm:truncate">{task.input_path}</p>
             </div>
-            <div className="flex items-center gap-2 flex-wrap mt-2 sm:mt-0">
+            <div className="flex flex-row items-center gap-2 flex-wrap mt-2 sm:mt-0">
               {task.input_file_size !== undefined && (
-                <Badge variant="outline" className="shrink-0 text-sm sm:text-xs">{formatFileSize(task.input_file_size)}</Badge>
+                <Badge variant="text" className="shrink-0 w-full sm:w-auto text-sm sm:text-xs justify-start">{formatFileSize(task.input_file_size)}</Badge>
               )}
               {task.provider && (
                 <Badge variant="secondary" className="shrink-0 text-sm sm:text-xs">{task.provider === 'cloudconvert' ? 'CloudConvert' : 'FFmpeg'}</Badge>
