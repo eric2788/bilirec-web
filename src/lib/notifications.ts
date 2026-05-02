@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api'
+import { getServiceWorkerRegistration } from '@/lib/service-worker'
 
 export type NotificationBootstrapResult =
   | 'started'
@@ -7,15 +8,6 @@ export type NotificationBootstrapResult =
   | 'push-unavailable'
   | 'unsupported'
   | 'worker-unavailable'
-
-async function getServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
-  if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
-    return null
-  }
-
-  await navigator.serviceWorker.register('/sw.js')
-  return navigator.serviceWorker.ready
-}
 
 function canUseNotifications() {
   return typeof window !== 'undefined' && 'Notification' in window

@@ -9,10 +9,10 @@ import { BottomNav } from '@/components/BottomNav'
 import { LeftSidebar } from '@/components/LeftSidebar'
 import { DiskUsageDisplay } from '@/components/DiskUsageDisplay'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { SignOutIcon, SunIcon, MoonIcon } from '@phosphor-icons/react'
 import { apiClient } from '@/lib/api'
 import { startLiveNotifications, stopLiveNotifications } from '@/lib/notifications'
+import { registerServiceWorker } from '@/lib/service-worker'
 import { storage } from '@/lib/storage'
 import { toast, Toaster } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -130,6 +130,85 @@ function App() {
     navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage)
     return () => navigator.serviceWorker.removeEventListener('message', handleServiceWorkerMessage)
   }, [isAuthenticated, userRole])
+
+  // ── Service Worker update lifecycle ──────────────────────
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) {
+      return
+    }
+
+    let cancelled = false
+    let waitingWorker: ServiceWorker | null = null
+
+    const promptReload = () => {
+      toast('有新版本可用', {
+        description: '已下載更新，重新載入即可套用。',
+        duration: Infinity,
+        action: {
+          label: '立即更新',
+          onClick: () => {
+            if (waitingWorker) {
+              waitingWorker.postMessage({ type: 'SKIP_WAITING' })
+            }
+          },
+        },
+      })
+    }
+
+    const handleControllerChange = () => {
+      // New SW took control — reload to get fresh assets
+      window.location.reload()
+    }
+
+    const setupUpdateListener = (reg: ServiceWorkerRegistration) => {
+      // If there's already a waiting worker, prompt immediately
+      if (reg.waiting) {
+        waitingWorker = reg.waiting
+        promptReload()
+      }
+
+      // Listen for new SW being installed
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing
+        if (!newWorker) return
+
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New SW installed but waiting — prompt user
+            waitingWorker = newWorker
+            if (!cancelled) {
+              promptReload()
+            }
+          }
+        })
+      })
+    }
+
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange)
+
+    // Register SW and set up update detection
+    const regPromise = registerServiceWorker()
+    if (regPromise) {
+      regPromise.then((reg) => {
+        if (cancelled) return
+        setupUpdateListener(reg)
+
+        // Periodically check for updates (every 30 minutes)
+        const updateInterval = setInterval(() => {
+          reg.update().catch((err) => {
+            console.debug('[SW] update check failed:', err)
+          })
+        }, 30 * 60 * 1000)
+
+        return () => clearInterval(updateInterval)
+      })
+    }
+
+    return () => {
+      cancelled = true
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange)
+    }
+  }, [])
 
   // Refresh disk usage every 30 seconds when authenticated
   useEffect(() => {
