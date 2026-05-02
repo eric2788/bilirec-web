@@ -150,6 +150,7 @@ function App() {
 
     const promptReload = () => {
       toast("有新版本可用", {
+        id: "sw-update",
         description: "已下載更新，重新載入即可套用。",
         duration: Infinity,
         action: {
@@ -206,15 +207,6 @@ function App() {
       regPromise.then((reg) => {
         if (cancelled) return;
         setupUpdateListener(reg);
-
-        // Periodically check for updates (every 30 minutes)
-        const updateInterval = setInterval(() => {
-          reg.update().catch((err) => {
-            console.debug("[SW] update check failed:", err);
-          });
-        }, 30 * 60 * 1000);
-
-        return () => clearInterval(updateInterval);
       });
     }
 
