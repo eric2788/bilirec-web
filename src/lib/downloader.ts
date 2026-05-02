@@ -17,8 +17,8 @@ export async function downloadUrlToDisk(url: string, options: DownloadOptions = 
   })()
 
   // 1) Try File System Access API
-  if (typeof window.showSaveFilePicker === 'function') {
-    const handle = await window.showSaveFilePicker({ suggestedName: filename })
+  if (typeof (window as any).showSaveFilePicker === 'function') {
+    const handle = await (window as any).showSaveFilePicker({ suggestedName: filename })
     const writable = await handle.createWritable()
 
     const res = await fetch(url, { credentials: 'include', signal })
