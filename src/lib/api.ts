@@ -2,7 +2,6 @@ import axios, { AxiosInstance } from "axios";
 import type {
   LoginRequest,
   RecordTask,
-  RecordFile,
   StartRecordRequest,
   RecordInfo,
   ConvertQueue,
@@ -17,7 +16,8 @@ import type {
   UpdateRoomConfigRequest,
   WebPushPublicKeyResponse,
   WebPushSubscriptionRequest,
-  WebPushUnsubscribeRequest
+  WebPushUnsubscribeRequest,
+  RecordFileListResponse
 } from "./types";
 import { sharedStore } from "./shared-store";
 
@@ -126,14 +126,14 @@ class ApiClient {
     await this.client.post(`/record/${roomId}/stop`, {});
   }
 
-  async getFiles(path: string = ""): Promise<RecordFile[]> {
+  async getFiles(path: string = "", offset: number = 0, limit: number = 200, search: string = ""): Promise<RecordFileListResponse> {
     const encodedPath = path
       .split("/")
       .filter(Boolean)
       .map(encodeURIComponent)
       .join("/");
     const url = encodedPath ? `/files/browse/${encodedPath}` : "/files/browse";
-    const response = await this.client.get<RecordFile[]>(url);
+    const response = await this.client.get<RecordFileListResponse>(url, { params: { offset, limit, search } });
     return response.data;
   }
 

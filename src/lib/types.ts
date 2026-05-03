@@ -68,6 +68,11 @@ export interface RecordFile {
   is_recording: boolean
 }
 
+export interface RecordFileListResponse {
+  total: number
+  items: RecordFile[]
+}
+
 export interface ShareFileInfo {
   url: string
   expires_in: number
