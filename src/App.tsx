@@ -117,6 +117,10 @@ function App() {
     if (tabFromUrl) setActiveTab(tabFromUrl);
     const pinnedRoom = getPinnedRoomFromSearch(window.location.search);
     if (pinnedRoom) setPinnedRoomId(pinnedRoom);
+    // Clean notification params from URL so a page refresh doesn't re-apply them
+    if (tabFromUrl || pinnedRoom) {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
   }, []);
 
   useEffect(() => {
