@@ -1,10 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { PlusIcon, BellIcon } from '@phosphor-icons/react'
+import { BellIcon } from '@phosphor-icons/react'
 import { SubscribeCard } from './SubscribeCard'
 import { EmptyState } from './EmptyState'
+import { RoomIdInputWithConfirmDialog } from './RoomIdInputWithConfirmDialog'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordInfo, RoomInfo } from '@/lib/types'
@@ -20,9 +18,6 @@ interface SubscribesViewProps {
 
 export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps) {
   const { isReadOnly } = useRole()
-  const [roomId, setRoomId] = useState('')
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isAdding, setIsAdding] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const scrollPositionRef = useRef(0)
   const isVisible = usePageVisibility()
@@ -105,22 +100,9 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
     }
   }, [rooms, pinnedRoomId])
 
-  const handleSubscribe = async () => {
-    const id = parseInt(roomId.trim())
-
-    if (!roomId.trim() || isNaN(id)) {
-      toast.error('請輸入有效的房間 ID')
-      return
-    }
-
-    setIsAdding(true)
+  const handleConfirmSubscribe = async (roomInfo: RoomInfo) => {
     try {
-      await apiClient.subscribeRoom(id)
-      toast.success('已成功訂閱房間')
-      setIsDialogOpen(false)
-      setRoomId('')
-      await mutateSubscribedRoomIds()
-      onRefresh?.()
+      await apiClient.subscribeRoom(roomInfo.room_id)
     } catch (error: any) {
       console.error('Failed to subscribe room:', error)
       if (error.response?.status === 409) {
@@ -130,9 +112,11 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
       } else {
         toast.error(error.response?.data || '訂閱失敗')
       }
-    } finally {
-      setIsAdding(false)
+      throw error
     }
+    toast.success('已成功訂閱房間')
+    await mutateSubscribedRoomIds()
+    onRefresh?.()
   }
 
   const handleUnsubscribe = async (roomId: number) => {
@@ -169,36 +153,15 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-xl font-bold">訂閱管理</h2>
           {!isReadOnly && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm">
-                <PlusIcon size={20} />
-                訂閱
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>訂閱直播間</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 pt-4">
-                <Input
-                  id="room-id"
-                  type="number"
-                  placeholder="輸入房間 ID"
-                  value={roomId}
-                  onChange={(e) => setRoomId(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSubscribe()}
-                />
-                <Button
-                  onClick={handleSubscribe}
-                  className="w-full"
-                  disabled={isAdding}
-                >
-                  {isAdding ? '訂閱中...' : '訂閱房間'}
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+            <RoomIdInputWithConfirmDialog
+              triggerLabel="訂閱"
+              inputDialogTitle="訂閱直播間"
+              confirmDialogTitle="確認訂閱對象"
+              confirmDialogDescription="請確認這是你要訂閱的直播間。"
+              confirmLabel="確認訂閱"
+              confirmLoadingLabel="訂閱中..."
+              onConfirm={handleConfirmSubscribe}
+            />
           )}
         </div>
       </div>
