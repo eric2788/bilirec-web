@@ -287,9 +287,21 @@ class ApiClient {
   }
 
   async getRoomInfos(roomIds: number[]): Promise<Record<string, RoomInfo>> {
-    const idsParam = roomIds.join(',');
-    const response = await this.client.get<Record<string, RoomInfo>>(`/room/infos?roomIDs=${idsParam}`);
-    return response.data ?? {};
+    if (!Array.isArray(roomIds) || roomIds.length === 0) {
+      return {};
+    }
+
+    const uniqueRoomIds = Array.from(new Set(roomIds.filter((id) => Number.isFinite(id))));
+    const mergedRoomInfos: Record<string, RoomInfo> = {};
+
+    for (let i = 0; i < uniqueRoomIds.length; i += 100) {
+      const batchIds = uniqueRoomIds.slice(i, i + 100);
+      const idsParam = batchIds.join(',');
+      const response = await this.client.get<Record<string, RoomInfo>>(`/room/infos?roomIDs=${idsParam}`);
+      Object.assign(mergedRoomInfos, response.data ?? {});
+    }
+
+    return mergedRoomInfos;
   }
 
   async checkLiveStatus(roomId: number): Promise<LiveStatus> {
