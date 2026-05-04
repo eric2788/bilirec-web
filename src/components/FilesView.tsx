@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
+import { useGridVirtualizer } from '@/hooks/use-grid-virtualizer'
 import { FileCard } from './FileCard'
 import { EmptyState } from './EmptyState'
 import { Button } from '@/components/ui/button'
@@ -19,38 +20,45 @@ type FilesLayoutConfig = {
 const getFilesLayoutConfig = (width: number): FilesLayoutConfig => {
   if (width < 768) {
     return {
-      pageSize: 20,
-      initialSkeletonCount: 6,
-      pagingSkeletonCount: 3
+      pageSize: 14,
+      initialSkeletonCount: 12,
+      pagingSkeletonCount: 6
     }
   }
 
   if (width < 1280) {
     return {
       pageSize: 36,
-      initialSkeletonCount: 8,
-      pagingSkeletonCount: 4
+      initialSkeletonCount: 32,
+      pagingSkeletonCount: 8
     }
   }
 
   return {
-    pageSize: 60,
-    initialSkeletonCount: 12,
-    pagingSkeletonCount: 6
+    pageSize: 63,
+    initialSkeletonCount: 56,
+    pagingSkeletonCount: 14
   }
 }
 
 function FileCardSkeleton() {
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="flex gap-3">
-        <Skeleton className="h-12 w-12 rounded-lg" />
-        <div className="flex-1 space-y-3">
-          <Skeleton className="h-5 w-2/3" />
-          <Skeleton className="h-4 w-1/3" />
-          <div className="flex gap-2 pt-1">
-            <Skeleton className="h-8 w-24" />
-            <Skeleton className="h-8 w-24" />
+    <div className="rounded-xl border border-border bg-card p-4 h-full w-full">
+      <div className="flex h-full gap-3">
+        <Skeleton className="h-12 w-12 rounded-lg shrink-0" />
+        <div className="flex grow min-w-0 flex-col">
+          <div className="mb-2">
+            <Skeleton className="h-6 w-2/3" />
+          </div>
+
+          <div className="grow" />
+
+          <div className="mb-2">
+            <Skeleton className="h-4 w-1/3" />
+          </div>
+
+          <div className="flex gap-2">
+            <Skeleton className="h-9 w-full rounded-md" />
           </div>
         </div>
       </div>
@@ -70,6 +78,11 @@ const normalizeList = (items?: RecordFile[]) => {
     ? items.filter((file) => !file.is_dir || file.name !== '..')
     : []
 }
+
+const CARD_MIN_WIDTH = 300
+const GRID_GAP = 16
+const CONTENT_PADDING_X = 32
+const ESTIMATED_ROW_HEIGHT = 140
 
 export function FilesView() {
   const [currentPath, setCurrentPath] = useState('')
@@ -142,7 +155,26 @@ export function FilesView() {
       const loaded = pages.reduce((sum, page) => sum + page.items.length, 0)
       return loaded < lastPage.total ? loaded : undefined
     },
-    staleTime: 15000
+    staleTime: 15000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: 'always'
+  })
+
+  useEffect(() => {
+    void queryClient.invalidateQueries({
+      queryKey: ['files', currentPath],
+      exact: false,
+      refetchType: 'active'
+    })
+  }, [currentPath, queryClient])
+
+  const { columnsCount, rows, fixedColumnsStyle, rowVirtualizer } = useGridVirtualizer<RecordFile | null>({
+    scrollContainerRef,
+    items: displayFiles,
+    cardMinWidth: CARD_MIN_WIDTH,
+    gridGap: GRID_GAP,
+    contentPaddingX: CONTENT_PADDING_X,
+    estimatedRowHeight: ESTIMATED_ROW_HEIGHT,
   })
 
   const queryFiles = useMemo(() => {
@@ -210,6 +242,8 @@ export function FilesView() {
   }, [isInitialLoading, isLoadingMore, isSearchTransition, hasNextPage, fetchNextPageQuery])
 
   useEffect(() => {
+    if (!hasNextPage) return
+
     const root = scrollContainerRef.current
     const target = loadMoreTriggerRef.current
     if (!root || !target) return
@@ -223,14 +257,14 @@ export function FilesView() {
       },
       {
         root,
-        rootMargin: '0px 0px 220px 0px',
+        rootMargin: '0px',
         threshold: 0.01
       }
     )
 
     observer.observe(target)
     return () => observer.disconnect()
-  }, [handleFetchNextPage])
+  }, [handleFetchNextPage, hasNextPage, displayFiles.length, pageSize])
 
   const handleNavigate = (path: string) => {
     setCurrentPath(path)
@@ -293,49 +327,95 @@ export function FilesView() {
         )}
       </div>
 
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 pb-20">
-        {isInitialLoading ? (
-          <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
-            {Array.from({ length: initialSkeletonCount }).map((_, index) => (
-              <FileCardSkeleton key={`initial-skeleton-${index}`} />
-            ))}
-          </div>
-        ) : displayFiles.length === 0 ? (
-          <EmptyState
-            icon={
-              <svg className="w-10 h-10 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-              </svg>
-            }
-            title="還沒有錄製檔案"
-            description="完成錄製後檔案會出現在這裡"
-          />
-        ) : (
-          <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(300px,1fr))]">
-            {displayFiles.map((file, index) => (
-              <FileCard
-                key={`${file.name}-${index}`}
-                file={file}
-                onNavigate={handleNavigate}
-                onDelete={() => {
-                  void queryClient.invalidateQueries({ queryKey })
-                }}
-                currentPath={currentPath}
+      <div className="flex-1 min-h-0 relative overflow-hidden">
+        <div
+          ref={scrollContainerRef}
+          className="absolute inset-0 overflow-y-auto"
+          style={{ scrollbarGutter: 'stable' }}
+        >
+          <div className="p-4 pb-20">
+            {isInitialLoading ? (
+              <div className="flex items-center justify-center h-48">
+                <div className="animate-pulse">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full">
+                    <svg
+                      className="w-8 h-8 text-primary"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeWidth="2" />
+                      <circle cx="12" cy="12" r="3" fill="currentColor" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            ) : displayFiles.length === 0 ? (
+              <EmptyState
+                icon={
+                  <svg className="w-10 h-10 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                  </svg>
+                }
+                title="還沒有錄製檔案"
+                description="完成錄製後檔案會出現在這裡"
               />
-            ))}
-            {isLoadingMore && Array.from({ length: pagingSkeletonCount }).map((_, index) => (
-              <FileCardSkeleton key={`paging-skeleton-${index}`} />
-            ))}
+            ) : (
+              <div style={{ height: `${Math.max(0, rowVirtualizer.getTotalSize() - GRID_GAP)}px`, position: 'relative' }}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+                  <div
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                      paddingBottom: `${GRID_GAP}px`,
+                    }}
+                  >
+                    <div className="grid gap-4" style={fixedColumnsStyle}>
+                      {rows[virtualRow.index].map((file, colIndex) => {
+                        if (!file) {
+                          return hasNextPage
+                            ? <FileCardSkeleton key={`row-placeholder-${virtualRow.index}-${colIndex}`} />
+                            : <div key={`row-empty-${virtualRow.index}-${colIndex}`} />
+                        }
+
+                        return (
+                          <FileCard
+                            key={`${file.name}-${virtualRow.index * columnsCount + colIndex}`}
+                            file={file}
+                            onNavigate={handleNavigate}
+                            onDelete={() => void queryClient.invalidateQueries({ queryKey })}
+                            currentPath={currentPath}
+                          />
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!isInitialLoading && displayFiles.length > 0 && hasNextPage && (
+              <div ref={loadMoreTriggerRef} className="mt-4" aria-hidden>
+                <div className="grid gap-4" style={fixedColumnsStyle}>
+                  {Array.from({ length: pageSize }).map((_, index) => (
+                    <FileCardSkeleton key={`skeleton-${index}`} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {!isInitialLoading && displayFiles.length > 0 && (
+              <p className="mt-4 text-center text-xs text-muted-foreground">
+                已載入 {displayFiles.length} / {displayTotal}
+              </p>
+            )}
           </div>
-        )}
-
-        {!isInitialLoading && displayFiles.length > 0 && (
-          <p className="mt-4 text-center text-xs text-muted-foreground">
-            已載入 {displayFiles.length} / {displayTotal}
-          </p>
-        )}
-
-        <div ref={loadMoreTriggerRef} className="h-1" aria-hidden />
+        </div>
       </div>
     </div>
   )

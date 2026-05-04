@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { BellIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
+import { useGridVirtualizer } from '@/hooks/use-grid-virtualizer'
+import { BellIcon, MagnifyingGlassIcon, SpinnerGapIcon } from '@phosphor-icons/react'
 import { SubscribeCard } from './SubscribeCard'
 import { EmptyState } from './EmptyState'
 import { RoomIdInputWithConfirmDialog } from './RoomIdInputWithConfirmDialog'
@@ -13,6 +14,12 @@ import { useScoredSearch } from '@/hooks/use-scored-search'
 import { useRole } from '@/lib/role-context'
 import { normalizeText } from '@/lib/utils'
 import useSWR from 'swr'
+
+const CARD_MIN_WIDTH = 400
+const GRID_GAP = 16
+const CONTENT_PADDING_X = 32
+const ESTIMATED_ROW_HEIGHT = 200
+const MAX_COLUMNS = 3
 
 interface SubscribesViewProps {
   onRefresh?: () => void
@@ -162,6 +169,16 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
     }
   }, [rooms, pinnedRoomId])
 
+  const { columnsCount, rows, fixedColumnsStyle, rowVirtualizer } = useGridVirtualizer<RoomInfo>({
+    scrollContainerRef,
+    items: filteredRooms,
+    cardMinWidth: CARD_MIN_WIDTH,
+    gridGap: GRID_GAP,
+    contentPaddingX: CONTENT_PADDING_X,
+    estimatedRowHeight: ESTIMATED_ROW_HEIGHT,
+    maxColumns: MAX_COLUMNS,
+  })
+
   const handleConfirmSubscribe = async (roomInfo: RoomInfo) => {
     try {
       await apiClient.subscribeRoom(roomInfo.room_id)
@@ -212,8 +229,33 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
   return (
     <div className="flex flex-col h-full">
       <div className="sticky top-0 bg-background z-10 p-4 border-b border-border">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-bold">訂閱管理</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold shrink-0">訂閱管理</h2>
+
+          <div className="relative ml-auto w-full sm:w-[200px] md:w-[280px]">
+            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+              <MagnifyingGlassIcon size={16} />
+            </span>
+            <Input
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="搜尋關鍵字"
+              className="pl-9 pr-16"
+              aria-label="搜尋訂閱直播間"
+              aria-busy={searchInput.trim() !== searchQuery}
+            />
+            <div
+              className={`pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 text-xs text-muted-foreground transition-opacity duration-200 ${
+                searchInput.trim() !== searchQuery ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <span className="animate-spin">
+                <SpinnerGapIcon size={14} />
+              </span>
+              <span className="hidden sm:inline">搜尋中</span>
+            </div>
+          </div>
+
           {!isReadOnly && (
             <RoomIdInputWithConfirmDialog
               triggerLabel="訂閱"
@@ -226,65 +268,79 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
             />
           )}
         </div>
-        <div className="relative">
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-            <MagnifyingGlassIcon size={16} />
-          </span>
-          <Input
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="搜尋直播間 ID、主播名稱或標題"
-            className="pl-9"
-            aria-label="搜尋訂閱直播間"
-          />
-        </div>
       </div>
 
-      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 pb-20">
-        {isLoading ? (
-          <LoadingScreen />
-        ) : rooms.length === 0 ? (
-          <EmptyState
-            icon={
-              <span className="text-muted-foreground">
-                <BellIcon size={40} />
-              </span>
-            }
-            title="還沒有訂閱任何房間"
-            description="點擊右上角的「訂閱」按鈕開始訂閱直播間"
-          />
-        ) : filteredRooms.length === 0 ? (
-          <EmptyState
-            icon={
-              <span className="text-muted-foreground">
-                <MagnifyingGlassIcon size={40} />
-              </span>
-            }
-            title="找不到符合條件的房間"
-            description="請嘗試其他關鍵字"
-          />
-        ) : (
-          <div className="cards-grid grid gap-4 w-full">
-            {filteredRooms.map((room) => {
-              const isPinned = room.room_id === pinnedRoomId
-              return (
-                <div
-                  key={room.room_id}
-                  className={`w-full rounded-lg transition-shadow duration-300 ${
-                    isPinned ? 'ring-2 ring-primary shadow-md' : ''
-                  }`}
-                >
-                  <SubscribeCard
-                    roomInfo={room}
-                    isRecording={recordingRoomIds.has(room.room_id)}
-                    onUnsubscribe={handleUnsubscribe}
-                    onStartRecord={handleStartRecord}
-                  />
-                </div>
-              )
-            })}
+      <div className="flex-1 min-h-0 relative overflow-hidden">
+        <div
+          ref={scrollContainerRef}
+          className="absolute inset-0 overflow-y-auto"
+          style={{ scrollbarGutter: 'stable' }}
+        >
+          <div className="p-4 pb-20">
+            {isLoading ? (
+              <LoadingScreen />
+            ) : rooms.length === 0 ? (
+              <EmptyState
+                icon={
+                  <span className="text-muted-foreground">
+                    <BellIcon size={40} />
+                  </span>
+                }
+                title="還沒有訂閱任何房間"
+                description="點擊右上角的「訂閱」按鈕開始訂閱直播間"
+              />
+            ) : filteredRooms.length === 0 ? (
+              <EmptyState
+                icon={
+                  <span className="text-muted-foreground">
+                    <MagnifyingGlassIcon size={40} />
+                  </span>
+                }
+                title="找不到符合條件的房間"
+                description="請嘗試其他關鍵字"
+              />
+            ) : (
+              <div style={{ height: `${Math.max(0, rowVirtualizer.getTotalSize() - GRID_GAP)}px`, position: 'relative' }}>
+                {rowVirtualizer.getVirtualItems().map((virtualRow) => (
+                  <div
+                    key={virtualRow.key}
+                    data-index={virtualRow.index}
+                    ref={rowVirtualizer.measureElement}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      width: '100%',
+                      transform: `translateY(${virtualRow.start}px)`,
+                      paddingBottom: `${GRID_GAP}px`,
+                    }}
+                  >
+                    <div className="grid gap-4" style={fixedColumnsStyle}>
+                      {rows[virtualRow.index].map((room, colIndex) => {
+                        if (!room) return <div key={`empty-${virtualRow.index}-${colIndex}`} />
+                        const isPinned = room.room_id === pinnedRoomId
+                        return (
+                          <div
+                            key={room.room_id}
+                            className={`w-full rounded-lg transition-shadow duration-300 ${
+                              isPinned ? 'ring-2 ring-primary shadow-md' : ''
+                            }`}
+                          >
+                            <SubscribeCard
+                              roomInfo={room}
+                              isRecording={recordingRoomIds.has(room.room_id)}
+                              onUnsubscribe={handleUnsubscribe}
+                              onStartRecord={handleStartRecord}
+                            />
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   )
