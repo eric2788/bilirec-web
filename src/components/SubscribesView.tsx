@@ -1,14 +1,17 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { BellIcon } from '@phosphor-icons/react'
+import { BellIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
 import { SubscribeCard } from './SubscribeCard'
 import { EmptyState } from './EmptyState'
 import { RoomIdInputWithConfirmDialog } from './RoomIdInputWithConfirmDialog'
+import { Input } from '@/components/ui/input'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordInfo, RoomInfo } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { usePageVisibility } from '@/hooks/use-visibility'
+import { useScoredSearch } from '@/hooks/use-scored-search'
 import { useRole } from '@/lib/role-context'
+import { normalizeText } from '@/lib/utils'
 import useSWR from 'swr'
 
 interface SubscribesViewProps {
@@ -18,6 +21,8 @@ interface SubscribesViewProps {
 
 export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps) {
   const { isReadOnly } = useRole()
+  const [searchInput, setSearchInput] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const scrollPositionRef = useRef(0)
   const isVisible = usePageVisibility()
@@ -81,6 +86,63 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
       return 0
     })
   }, [details.roomInfos, pinnedRoomId])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setSearchQuery(searchInput.trim())
+    }, 200)
+    return () => window.clearTimeout(timer)
+  }, [searchInput])
+
+  const normalizeSearchText = useMemo(
+    () => (value: string) => normalizeText(value).toLowerCase(),
+    []
+  )
+
+  const roomSearchFields = useMemo(
+    () => [
+      {
+        getValue: (room: RoomInfo) => room.room_id,
+        exact: 140,
+        startsWith: 90,
+        includes: 70,
+      },
+      {
+        getValue: (room: RoomInfo) => room.room_id,
+        exact: 140,
+        startsWith: 120,
+        includes: 100,
+        when: (normalizedQuery: string) => /^\d+$/.test(normalizedQuery),
+      },
+      {
+        getValue: (room: RoomInfo) => room.uname,
+        exact: 130,
+        startsWith: 110,
+        includes: 90,
+      },
+      {
+        getValue: (room: RoomInfo) => room.title,
+        exact: 80,
+        startsWith: 80,
+        includes: 60,
+      },
+      {
+        getValue: (room: RoomInfo) => room.description,
+        exact: 40,
+        startsWith: 40,
+        includes: 40,
+      },
+    ],
+    []
+  )
+
+  const filteredRooms = useScoredSearch<RoomInfo>({
+    items: rooms,
+    query: searchQuery,
+    fields: roomSearchFields,
+    normalize: normalizeSearchText,
+    minScore: 1,
+  })
 
   const isLoading = isSubscribedRoomsLoading || (subscribedRoomIds.length > 0 && isDetailsLoading)
 
@@ -164,6 +226,18 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
             />
           )}
         </div>
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+            <MagnifyingGlassIcon size={16} />
+          </span>
+          <Input
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="搜尋直播間 ID、主播名稱或標題"
+            className="pl-9"
+            aria-label="搜尋訂閱直播間"
+          />
+        </div>
       </div>
 
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 pb-20">
@@ -179,9 +253,19 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
             title="還沒有訂閱任何房間"
             description="點擊右上角的「訂閱」按鈕開始訂閱直播間"
           />
+        ) : filteredRooms.length === 0 ? (
+          <EmptyState
+            icon={
+              <span className="text-muted-foreground">
+                <MagnifyingGlassIcon size={40} />
+              </span>
+            }
+            title="找不到符合條件的房間"
+            description="請嘗試其他關鍵字"
+          />
         ) : (
           <div className="cards-grid grid gap-4 w-full">
-            {rooms.map((room) => {
+            {filteredRooms.map((room) => {
               const isPinned = room.room_id === pinnedRoomId
               return (
                 <div
