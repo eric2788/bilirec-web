@@ -119,7 +119,11 @@ class ApiClient {
 
   async startRecord(data: StartRecordRequest): Promise<void> {
     const roomId = data.roomId;
-    await this.client.post(`/record/${roomId}/start`, {});
+    const params: Record<string, number> = {}
+    if (data.durationMinutes !== undefined) {
+      params.duration_minutes = data.durationMinutes
+    }
+    await this.client.post(`/record/${roomId}/start`, {}, { params });
   }
 
   async stopRecord(roomId: number): Promise<void> {

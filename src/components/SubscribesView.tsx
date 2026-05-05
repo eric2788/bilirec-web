@@ -218,7 +218,14 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
 
   const handleStartRecord = async (roomId: number) => {
     try {
-      await apiClient.startRecord({ roomId })
+      let durationMinutes: number | undefined
+      try {
+        const config = await apiClient.getRoomConfig(roomId)
+        durationMinutes = config.record_duration_minutes
+      } catch {
+        // If config fetch fails, fall back to backend default (no param)
+      }
+      await apiClient.startRecord({ roomId, durationMinutes })
       await mutateDetails()
       toast.success(t('subscribesView.startSuccess'))
       onRefresh?.()

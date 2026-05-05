@@ -80,6 +80,7 @@ export interface ShareFileInfo {
 
 export interface StartRecordRequest {
   roomId: number
+  durationMinutes?: number
 }
 
 export interface ApiError {
@@ -115,11 +116,13 @@ export interface RoomConfig {
   room_id: number
   auto_record: boolean
   notify: boolean
+  record_duration_minutes?: number
 }
 
 export interface UpdateRoomConfigRequest {
   auto_record: boolean
   notify: boolean
+  record_duration_minutes?: number
 }
 
 export interface DiskUsage {
