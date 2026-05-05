@@ -11,7 +11,8 @@ export const resources = {
         theme: "主題",
         themeLight: "淺色",
         themeDark: "深色",
-        switchTheme: "切換主題"
+        switchTheme: "切換主題",
+        search: "搜尋"
       },
       nav: {
         records: "錄製管理",
@@ -166,7 +167,7 @@ export const resources = {
       },
       subscribesView: {
         title: "訂閱管理",
-        searchPlaceholder: "搜尋關鍵字",
+        searchPlaceholder: "搜尋直播間 ID、主播名稱或標題",
         searchAria: "搜尋訂閱直播間",
         searching: "搜尋中",
         subscribe: "訂閱",
@@ -289,6 +290,7 @@ export const resources = {
         themeLight: "浅色",
         themeDark: "深色",
         switchTheme: "切换主题",
+        search: "搜索",
         logoutSuccess: "已登出",
         copyRoomIdSuccess: "已复制 直播间 ID: {{roomId}}",
         copyRoomIdFailed: "复制 直播间 ID 失败"
@@ -446,7 +448,7 @@ export const resources = {
       },
       subscribesView: {
         title: "订阅管理",
-        searchPlaceholder: "搜索关键词",
+        searchPlaceholder: "搜索直播间 ID、主播名称或标题",
         searchAria: "搜索订阅直播间",
         searching: "搜索中",
         subscribe: "订阅",

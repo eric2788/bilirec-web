@@ -4,9 +4,9 @@ import { useGridVirtualizer } from '@/hooks/use-grid-virtualizer'
 import { FileCard } from './FileCard'
 import { EmptyState } from './EmptyState'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CaretLeftIcon, MagnifyingGlassIcon, SpinnerGapIcon } from '@phosphor-icons/react'
+import { CaretLeftIcon } from '@phosphor-icons/react'
+import { SearchBar } from './SearchBar'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordFile, RecordFileListResponse } from '@/lib/types'
@@ -295,31 +295,17 @@ export function FilesView() {
             <h2 className="text-xl font-bold">{t('filesView.title')}</h2>
           </div>
 
-          <div className="ml-auto w-[200px] sm:w-[280px]">
-            <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                <MagnifyingGlassIcon size={16} />
-              </span>
-              <Input
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                placeholder={t('filesView.searchPlaceholder')}
-                className="pl-9 pr-20"
-                aria-busy={isSearching}
-              />
-
-              <div
-                className={`pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 text-xs text-muted-foreground transition-opacity duration-200 ${
-                  isSearching ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                <span className="animate-spin">
-                  <SpinnerGapIcon size={14} />
-                </span>
-                <span>{t('filesView.searching')}</span>
-              </div>
-            </div>
-          </div>
+          <SearchBar
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder={t('filesView.searchPlaceholder')}
+            isSearching={isSearching}
+            searchingLabel={t('filesView.searching')}
+            searchLabel={t('actions.search')}
+            dialogTitle={t('filesView.searchPlaceholder')}
+            containerClassName="ml-auto"
+            inputWidth="w-[200px] sm:w-[280px]"
+          />
         </div>
 
         {currentPath && (

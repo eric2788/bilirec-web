@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useGridVirtualizer } from '@/hooks/use-grid-virtualizer'
-import { BellIcon, MagnifyingGlassIcon, SpinnerGapIcon } from '@phosphor-icons/react'
+import { BellIcon, MagnifyingGlassIcon } from '@phosphor-icons/react'
+import { SearchBar } from './SearchBar'
 import { SubscribeCard } from './SubscribeCard'
 import { EmptyState } from './EmptyState'
 import { RoomIdInputWithConfirmDialog } from './RoomIdInputWithConfirmDialog'
-import { Input } from '@/components/ui/input'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordInfo, RoomInfo } from '@/lib/types'
@@ -234,29 +234,18 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
         <div className="flex items-center gap-2">
           <h2 className="text-xl font-bold shrink-0">{t('subscribesView.title')}</h2>
 
-          <div className="relative ml-auto w-full sm:w-[200px] md:w-[280px]">
-            <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-              <MagnifyingGlassIcon size={16} />
-            </span>
-            <Input
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder={t('subscribesView.searchPlaceholder')}
-              className="pl-9 pr-16"
-              aria-label={t('subscribesView.searchAria')}
-              aria-busy={searchInput.trim() !== searchQuery}
-            />
-            <div
-              className={`pointer-events-none absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1 text-xs text-muted-foreground transition-opacity duration-200 ${
-                searchInput.trim() !== searchQuery ? 'opacity-100' : 'opacity-0'
-              }`}
-            >
-              <span className="animate-spin">
-                <SpinnerGapIcon size={14} />
-              </span>
-              <span className="hidden sm:inline">{t('subscribesView.searching')}</span>
-            </div>
-          </div>
+          <SearchBar
+            value={searchInput}
+            onChange={setSearchInput}
+            placeholder={t('subscribesView.searchPlaceholder')}
+            isSearching={searchInput.trim() !== searchQuery}
+            searchingLabel={t('subscribesView.searching')}
+            searchLabel={t('actions.search')}
+            dialogTitle={t('subscribesView.searchAria')}
+            ariaLabel={t('subscribesView.searchAria')}
+            containerClassName="ml-auto"
+            inputWidth="w-[200px] md:w-[280px]"
+          />
 
           {!isReadOnly && (
             <RoomIdInputWithConfirmDialog
