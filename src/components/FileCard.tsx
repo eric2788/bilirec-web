@@ -14,6 +14,7 @@ import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import { cn } from '../lib/utils';
 import { useRole } from '@/lib/role-context'
+import { useTranslation } from 'react-i18next'
 
 interface FileCardProps {
   file: RecordFile
@@ -23,6 +24,7 @@ interface FileCardProps {
 }
 
 export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileCardProps) {
+  const { t } = useTranslation()
   const { isReadOnly } = useRole()
   const [isDownloading, setIsDownloading] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -30,7 +32,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
   const [isSharing, setIsSharing] = useState(false)
 
   // Normalize incoming file shape and guard against missing data
-  const name = typeof file.name === 'string' ? file.name : '未命名'
+  const name = typeof file.name === 'string' ? file.name : t('fileCard.unnamed')
   const isDir = 'is_dir' in file ? !!(file as any).is_dir : !!(file as any).isDir
   const sizeVal = typeof file.size === 'number' ? file.size : Number((file as any).size) || 0
   const extension = file.name.split('.').pop()?.toUpperCase()
@@ -52,7 +54,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     // Guard: prevent deleting while file is currently recording
     if (isRecording) {
       setIsDeleteDialogOpen(false)
-      toast.error('檔案正在錄製中，無法刪除')
+      toast.error(t('fileCard.inRecordingDeleteBlocked'))
       return
     }
 
@@ -64,11 +66,11 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
       } else {
         await apiClient.deleteFiles([fullPath])
       }
-      toast.success('刪除成功')
+      toast.success(t('fileCard.deleteSuccess'))
       onDelete?.()
     } catch (error: any) {
       console.error('Delete failed:', error)
-      toast.error('刪除失敗' + (error.response?.data ? `: ${error.response.data}` : ''))
+      toast.error(t('fileCard.deleteFailed') + (error.response?.data ? `: ${error.response.data}` : ''))
     } finally {
       setIsDeleting(false)
     }
@@ -82,7 +84,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     }
 
     if (isRecording) {
-      toast.error('檔案正在錄製中，無法下載')
+      toast.error(t('fileCard.inRecordingDownloadBlocked'))
       return
     }
 
@@ -92,13 +94,13 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
       const fullPath = currentPath ? `${currentPath}/${name}` : name
       await apiClient.downloadFile(fullPath, { suggestedName: name })
       // Let the browser handle the download/navigation
-      toast.info('正在下載...')
+      toast.info(t('fileCard.downloading'))
     } catch (error: any) {
       console.error('Download failed:', error)
       if (error?.name === 'AbortError') {
-        toast.warning('下載已取消')
+        toast.warning(t('fileCard.downloadCanceled'))
       } else {
-        toast.error('下載失敗' + (error.response?.data ? `: ${error.response?.data}` : error?.message ? `: ${error.message}` : ''))
+        toast.error(t('fileCard.downloadFailed') + (error.response?.data ? `: ${error.response?.data}` : error?.message ? `: ${error.message}` : ''))
       }
     } finally {
       setIsDownloading(false)
@@ -109,7 +111,7 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     if (isDir) return
 
     if (isRecording) {
-      toast.error('檔案正在錄製中，無法預覽')
+      toast.error(t('fileCard.inRecordingPreviewBlocked'))
       return
     }
 
@@ -130,12 +132,12 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
 
   const openConvertDialog = () => {
     if (isDir) {
-      toast.error('無法轉換')
+      toast.error(t('fileCard.convertNotSupported'))
       return
     }
 
     if (isRecording) {
-      toast.error('檔案正在錄製中，無法轉換')
+      toast.error(t('fileCard.inRecordingConvertBlocked'))
       return
     }
 
@@ -151,17 +153,17 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
     try {
       const fullPath = currentPath ? `${currentPath}/${name}` : name
       await apiClient.enqueueConvertTask(fullPath, deleteSourceAfterConvert, convertFormat)
-      toast.success('已加入轉換佇列')
+      toast.success(t('fileCard.enqueueConvertSuccess'))
     } catch (error: any) {
       console.error('Enqueue convert failed:', error)
-      toast.error('加入轉換佇列失敗' + (error.response?.data ? `: ${error.response?.data}` : ''))
+      toast.error(t('fileCard.enqueueConvertFailed') + (error.response?.data ? `: ${error.response?.data}` : ''))
     } finally {
       setIsConverting(false)
     }
   }
 const handleShare = async () => {
     if (isRecording) {
-      toast.error('檔案正在錄製中，無法分享')
+      toast.error(t('fileCard.inRecordingShareBlocked'))
       return
     }
 
@@ -172,10 +174,10 @@ const handleShare = async () => {
       
       // Copy URL to clipboard
       await navigator.clipboard.writeText(shareInfo.url)
-      toast.success(`分享連結已複製到剪貼簿（有效期 ${shareInfo.expires_in} 秒）`)
+      toast.success(t('fileCard.shareLinkCopied', { seconds: shareInfo.expires_in }))
     } catch (error: any) {
       console.error('Share failed:', error)
-      toast.error('產生分享連結失敗' + (error.response?.data ? `: ${error.response.data}` : ''))
+      toast.error(t('fileCard.shareFailed') + (error.response?.data ? `: ${error.response.data}` : ''))
     } finally {
       setIsSharing(false)
     }
@@ -202,8 +204,8 @@ const handleShare = async () => {
             handleOpenFolder()
           }
         }}
-        aria-label={`打開資料夾 ${name}`}
-        title="打開資料夾"
+        aria-label={t('fileCard.openFolderAria', { name })}
+        title={t('fileCard.openFolderTitle')}
       >
         <div className="flex h-full gap-3">
           <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0 text-secondary-foreground">
@@ -222,7 +224,7 @@ const handleShare = async () => {
             <div className="grow" />
 
             <div className="mb-2 min-w-0 text-xs text-muted-foreground">
-              <p className="font-mono">資料夾</p>
+              <p className="font-mono">{t('fileCard.folderLabel')}</p>
             </div>
 
             <div className="flex gap-2">
@@ -236,13 +238,13 @@ const handleShare = async () => {
                   e.stopPropagation()
                   openDeleteDialog(true)
                 }}
-                aria-label={`刪除資料夾 ${name}`}
-                title="刪除"
+                aria-label={t('fileCard.deleteFolderAria', { name })}
+                title={t('fileCard.delete')}
               >
                 <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
                   <TrashSimpleIcon size={16} />
                 </span>
-                <span>{isDeleting ? '刪除中…' : '刪除'}</span>
+                <span>{isDeleting ? t('fileCard.deleting') : t('fileCard.delete')}</span>
               </Button>
               )}
             </div>
@@ -253,13 +255,13 @@ const handleShare = async () => {
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent onClick={(e) => e.stopPropagation()}>
             <DialogHeader>
-              <DialogTitle>確認刪除</DialogTitle>
-              <DialogDescription>{deleteTargetIsDir ? `確定要刪除資料夾 "${name}" 及其內容嗎？此操作無法復原。` : `確定要刪除檔案 "${name}" 嗎？此操作無法復原。`}</DialogDescription>
+              <DialogTitle>{t('fileCard.confirmDeleteTitle')}</DialogTitle>
+              <DialogDescription>{deleteTargetIsDir ? t('fileCard.confirmDeleteFolder', { name }) : t('fileCard.confirmDeleteFile', { name })}</DialogDescription>
             </DialogHeader>
 
             <DialogFooter>
-              <Button variant="ghost" onClick={(e) => { e.stopPropagation(); setIsDeleteDialogOpen(false) }}>取消</Button>
-              <Button variant="destructive" onClick={(e) => { e.stopPropagation(); performDelete(deleteTargetIsDir) }} disabled={isDeleting}>{isDeleting ? '刪除中…' : '確定刪除'}</Button>
+              <Button variant="ghost" onClick={(e) => { e.stopPropagation(); setIsDeleteDialogOpen(false) }}>{t('fileCard.cancel')}</Button>
+              <Button variant="destructive" onClick={(e) => { e.stopPropagation(); performDelete(deleteTargetIsDir) }} disabled={isDeleting}>{isDeleting ? t('fileCard.deleting') : t('fileCard.confirmDelete')}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -290,7 +292,7 @@ const handleShare = async () => {
               </Badge>
               {isRecording && (
                 <Badge variant="destructive" className="shrink-0">
-                  錄製中
+                  {t('fileCard.recordingBadge')}
                 </Badge>
               )}
             </div>
@@ -309,14 +311,14 @@ const handleShare = async () => {
                 className={cn("flex-1 relative overflow-hidden", isDownloading ? 'cursor-wait' : '')}
                 disabled={isDownloading || isRecording || isDeleting}
                 onClick={handleDownload}
-                title={isRecording ? '檔案正在錄製中，無法下載' : undefined}
+                title={isRecording ? t('fileCard.inRecordingDownloadBlocked') : undefined}
                 aria-disabled={isRecording || isDownloading || isDeleting}
               >
                 <span className={isDownloading ? 'animate-ping relative z-10' : 'relative z-10'} aria-hidden>
                   <DownloadSimpleIcon size={16} />
                 </span>
                 <span className="relative z-10">
-                  {isRecording ? '錄製中' : isDownloading ? '下載中…' : '下載'}
+                  {isRecording ? t('fileCard.recordingBadge') : isDownloading ? t('fileCard.downloadingLabel') : t('fileCard.download')}
                 </span>
               </Button>
 
@@ -329,8 +331,8 @@ const handleShare = async () => {
                     className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center shrink-0")}
                     disabled={isRecording || isDeleting || isDownloading}
                     onClick={handlePreview}
-                    aria-label={`預覽 ${name}`}
-                    title={isRecording ? '檔案正在錄製中，無法預覽' : '預覽'}
+                    aria-label={t('fileCard.previewAria', { name })}
+                    title={isRecording ? t('fileCard.inRecordingPreviewBlocked') : t('fileCard.preview')}
                   >
                     <EyeIcon size={16} />
                   </Button>
@@ -342,8 +344,8 @@ const handleShare = async () => {
                     className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center shrink-0", isConverting ? 'cursor-wait' : '')}
                     disabled={isConverting || isDownloading || isDeleting || isRecording}
                     onClick={openConvertDialog}
-                    aria-label={`轉換 ${name}`}
-                    title={isConverting ? '轉換中…' : '轉換'}
+                    aria-label={t('fileCard.convertAria', { name })}
+                    title={isConverting ? t('fileCard.converting') : t('fileCard.convert')}
                   >
                     <span className={isConverting ? 'animate-ping' : ''} aria-hidden>
                       <SwapIcon size={16} />
@@ -358,8 +360,8 @@ const handleShare = async () => {
                     className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", isSharing ? 'cursor-wait' : '')}
                     disabled={isSharing || isDeleting}
                     onClick={handleShare}
-                    aria-label={`分享檔案 ${name}`}
-                    title={isSharing ? '產生分享連結中' : '分享'}
+                    aria-label={t('fileCard.shareFileAria', { name })}
+                    title={isSharing ? t('fileCard.shareGenerating') : t('fileCard.share')}
                   >
                     <span className={isSharing ? 'animate-ping' : ''} aria-hidden>
                       <ShareNetworkIcon size={16} />
@@ -373,8 +375,8 @@ const handleShare = async () => {
                     className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", isDeleting ? 'opacity-50 pointer-events-none' : '')}
                     disabled={isDeleting || isDownloading}
                     onClick={() => { if (!isDownloading) { openDeleteDialog(false); } }}
-                    aria-label={isDownloading ? '下載中' : `刪除檔案 ${name}`}
-                    title={isDownloading ? '下載中' : '刪除'}
+                    aria-label={isDownloading ? t('fileCard.downloadInProgress') : t('fileCard.deleteFileAria', { name })}
+                    title={isDownloading ? t('fileCard.downloadInProgress') : t('fileCard.delete')}
                   >
                     <span className={isDeleting ? 'animate-ping' : ''} aria-hidden>
                       <TrashSimpleIcon size={16} />
@@ -392,7 +394,7 @@ const handleShare = async () => {
                       variant="ghost"
                       className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", (isDeleting || isRecording) ? 'opacity-50 pointer-events-none' : '')}
                       disabled={isDeleting || isRecording || isDownloading}
-                      aria-label="更多操作"
+                      aria-label={t('fileCard.moreActions')}
                     >
                       <MoreVerticalIcon className="size-4" />
                     </Button>
@@ -400,23 +402,23 @@ const handleShare = async () => {
                   <DropdownMenuContent align="end">
                     {isMp4 && (
                       <DropdownMenuItem onSelect={() => { handlePreview(); }} disabled={isDeleting || isDownloading || isRecording}>
-                        預覽
+                        {t('fileCard.preview')}
                       </DropdownMenuItem>
                     )}
                     {/* Show share item only when not recording or downloading */}
                     {!isRecording && !isDownloading && (
                       <DropdownMenuItem onSelect={() => { handleShare(); }} disabled={isSharing || isDeleting}>
-                        {isSharing ? '產生分享連結中…' : '分享'}
+                        {isSharing ? t('fileCard.shareGeneratingLong') : t('fileCard.share')}
                       </DropdownMenuItem>
                     )}
                     {!isMp4 && !isReadOnly && (
                       <DropdownMenuItem onSelect={() => { openConvertDialog(); }} disabled={isConverting || isDownloading || isDeleting || isRecording}>
-                        {isConverting ? '轉換中…' : '轉換'}
+                        {isConverting ? t('fileCard.converting') : t('fileCard.convert')}
                       </DropdownMenuItem>
                     )}
                     {!isReadOnly && !isRecording && (
                       <DropdownMenuItem variant="destructive" onSelect={() => { if (!isDownloading) { openDeleteDialog(false); } }} disabled={isDeleting || isDownloading}>
-                        刪除
+                        {t('fileCard.delete')}
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -429,12 +431,12 @@ const handleShare = async () => {
             <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>確認轉換</DialogTitle>
-                  <DialogDescription>是否要將 "{name}" 加入轉換佇列（輸出格式: {convertFormat.toUpperCase()}）？可選擇在轉換完成後刪除原檔。</DialogDescription>
+                  <DialogTitle>{t('fileCard.convertConfirmTitle')}</DialogTitle>
+                  <DialogDescription>{t('fileCard.convertConfirmDescription', { name, format: convertFormat.toUpperCase() })}</DialogDescription>
                 </DialogHeader>
 
                 <div className="mt-3">
-                  <span className="text-sm">輸出格式</span>
+                  <span className="text-sm">{t('fileCard.outputFormat')}</span>
                   <div className="mt-2">
                     <Select value={convertFormat} onValueChange={(v) => setConvertFormat(v)}>
                       <SelectTrigger className="w-40">
@@ -442,7 +444,7 @@ const handleShare = async () => {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="mp4">MP4</SelectItem>
-                        {/* <SelectItem value="mkv" disabled>MKV（即將支援）</SelectItem> */}
+                        {/* <SelectItem value="mkv" disabled>MKV (coming soon)</SelectItem> */}
                       </SelectContent>
                     </Select>
                   </div>
@@ -451,14 +453,14 @@ const handleShare = async () => {
                 <div className="flex items-center gap-3 mt-4">
                   <Checkbox checked={deleteSourceAfterConvert} onCheckedChange={(v) => setDeleteSourceAfterConvert(!!v)} />
                   <div className="flex flex-col">
-                    <span className="text-sm">轉換完成後刪除原檔</span>
-                    <span className="text-xs text-muted-foreground">取消勾選會保留原始檔案</span>
+                    <span className="text-sm">{t('fileCard.deleteSourceAfterConvert')}</span>
+                    <span className="text-xs text-muted-foreground">{t('fileCard.keepSourceHint')}</span>
                   </div>
                 </div>
 
                 <DialogFooter>
-                  <Button variant="ghost" onClick={() => setIsConvertDialogOpen(false)}>取消</Button>
-                  <Button onClick={confirmConvert} disabled={isConverting}>{isConverting ? `轉換 ${convertFormat.toUpperCase()} 中…` : `確定轉換 ${convertFormat.toUpperCase()}`}</Button>
+                  <Button variant="ghost" onClick={() => setIsConvertDialogOpen(false)}>{t('fileCard.cancel')}</Button>
+                  <Button onClick={confirmConvert} disabled={isConverting}>{isConverting ? t('fileCard.convertRunning', { format: convertFormat.toUpperCase() }) : t('fileCard.confirmConvert', { format: convertFormat.toUpperCase() })}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -467,13 +469,13 @@ const handleShare = async () => {
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>確認刪除</DialogTitle>
-                  <DialogDescription>{deleteTargetIsDir ? `確定要刪除資料夾 "${name}" 及其內容嗎？此操作無法復原。` : `確定要刪除檔案 "${name}" 嗎？此操作無法復原。`}</DialogDescription>
+                  <DialogTitle>{t('fileCard.confirmDeleteTitle')}</DialogTitle>
+                  <DialogDescription>{deleteTargetIsDir ? t('fileCard.confirmDeleteFolder', { name }) : t('fileCard.confirmDeleteFile', { name })}</DialogDescription>
                 </DialogHeader>
 
                 <DialogFooter>
-                  <Button variant="ghost" onClick={() => setIsDeleteDialogOpen(false)}>取消</Button>
-                  <Button variant="destructive" onClick={() => performDelete(deleteTargetIsDir)} disabled={isDeleting}>{isDeleting ? '刪除中…' : '確定刪除'}</Button>
+                  <Button variant="ghost" onClick={() => setIsDeleteDialogOpen(false)}>{t('fileCard.cancel')}</Button>
+                  <Button variant="destructive" onClick={() => performDelete(deleteTargetIsDir)} disabled={isDeleting}>{isDeleting ? t('fileCard.deleting') : t('fileCard.confirmDelete')}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { useTranslation } from "react-i18next";
 import { LoginView } from "@/components/LoginView";
 import { RecordsView } from "@/components/RecordsView";
 import { FilesView } from "@/components/FilesView";
@@ -9,7 +10,24 @@ import { BottomNav } from "@/components/BottomNav";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { DiskUsageDisplay } from "@/components/DiskUsageDisplay";
 import { Button } from "@/components/ui/button";
-import { SignOutIcon, SunIcon, MoonIcon } from "@phosphor-icons/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { useLanguage } from "@/hooks/use-language";
+import { getStoredLanguage, type AppLanguage } from "@/lib/language";
+import {
+  SignOutIcon,
+  SunIcon,
+  MoonIcon,
+  TranslateIcon,
+  GearIcon,
+  CheckIcon
+} from "@phosphor-icons/react";
 import { apiClient } from "@/lib/api";
 import {
   startLiveNotifications,
@@ -42,7 +60,9 @@ function getPinnedRoomFromSearch(search: string): number | null {
 }
 
 function App() {
+  const { t } = useTranslation();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const { language, setLanguage } = useLanguage();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => setMounted(true), []);
@@ -60,6 +80,16 @@ function App() {
   );
 
   const isReadOnly = userRole === "viewer";
+
+  const activeTheme = resolvedTheme || theme || "light";
+
+  const handleThemeToggle = () => {
+    setTheme(activeTheme === "dark" ? "light" : "dark");
+  };
+
+  const handleLanguageChange = async (nextLanguage: AppLanguage) => {
+    await setLanguage(nextLanguage);
+  };
 
   const handleTabChange = (tab: AppTab) => {
     if (tab !== "subscribe") setPinnedRoomId(null);
@@ -105,12 +135,32 @@ function App() {
           error
         );
       });
-      toast.error("會話逾期，請重新登入"); // or localized message you prefer
+      toast.error(t("toast.sessionExpired"));
     };
 
     window.addEventListener("api:unauthorized", onUnauthorized);
     return () => window.removeEventListener("api:unauthorized", onUnauthorized);
-  }, []);
+  }, [t]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncStoredLanguage = async () => {
+      const storedLanguage = await getStoredLanguage();
+      if (cancelled || !storedLanguage || storedLanguage === language) {
+        return;
+      }
+      await setLanguage(storedLanguage);
+    };
+
+    syncStoredLanguage().catch((error) => {
+      console.error("Failed to sync language preference:", error);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [language, setLanguage]);
 
   useEffect(() => {
     const tabFromUrl = getTabFromSearch(window.location.search);
@@ -153,12 +203,12 @@ function App() {
     let waitingWorker: ServiceWorker | null = null;
 
     const promptReload = () => {
-      toast("有新版本可用", {
+      toast(t("toast.updateAvailable"), {
         id: "sw-update",
-        description: "已下載更新，重新載入即可套用。",
+        description: t("toast.updateDownloaded"),
         duration: Infinity,
         action: {
-          label: "立即更新",
+          label: t("toast.updateNow"),
           onClick: () => {
             if (waitingWorker) {
               waitingWorker.postMessage({ type: "SKIP_WAITING" });
@@ -221,7 +271,7 @@ function App() {
         handleControllerChange
       );
     };
-  }, []);
+  }, [t]);
 
   // Refresh disk usage every 30 seconds when authenticated
   useEffect(() => {
@@ -265,7 +315,7 @@ function App() {
         }
 
         if (result === "permission-denied") {
-          toast.error("瀏覽器通知已被封鎖，無法接收直播提醒");
+          toast.error(t("toast.notificationBlocked"));
         } else if (result === "push-unavailable") {
           console.error(
             "Web Push bootstrap failed: push-unavailable (check console above for details)"
@@ -287,7 +337,7 @@ function App() {
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, userRole]);
+  }, [isAuthenticated, t, userRole]);
 
   const handleLoginSuccess = (response: LoginResponse) => {
     const role = response.role || "admin";
@@ -298,9 +348,9 @@ function App() {
     setUserName(user);
     setIsAuthenticated(true);
     if (user) {
-      toast.success(`歡迎回來，${user}！`);
+      toast.success(t("toast.welcomeBack", { user }));
     } else {
-      toast.success("登入成功");
+      toast.success(t("toast.loginSuccess"));
     }
   };
 
@@ -314,7 +364,7 @@ function App() {
       localStorage.removeItem("user-name");
       setUserRole("admin");
       setUserName("");
-      toast.success("已登出");
+      toast.success(t("toast.logoutSuccess"));
     } catch (error) {
       console.error("Logout failed:", error);
     }
@@ -371,40 +421,112 @@ function App() {
                   BiliRec
                 </h1>
                 <p className="text-xs text-muted-foreground">
-                  Bilibili 直播錄製系統
+                  {t("app.subtitle")}
                 </p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <DiskUsageDisplay diskUsage={diskUsage} compact={true} />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
-                aria-label="切換主題"
-                onClick={() => {
-                  const active = resolvedTheme || theme || "light";
-                  setTheme(active === "dark" ? "light" : "dark");
-                }}
-              >
-                {mounted ? (
-                  (resolvedTheme || theme) === "dark" ? (
-                    <SunIcon size={18} />
+
+              <div className="hidden sm:flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
+                      aria-label={t("actions.language")}
+                    >
+                      <TranslateIcon size={18} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuLabel>{t("actions.language")}</DropdownMenuLabel>
+                    {(["zh-TW", "zh-CN"] as AppLanguage[]).map((lang) => (
+                      <DropdownMenuItem
+                        key={lang}
+                        onSelect={() => void handleLanguageChange(lang)}
+                        className={`gap-2 cursor-pointer ${
+                          language === lang
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <span className="w-4 shrink-0">
+                          {language === lang && <CheckIcon size={14} weight="bold" />}
+                        </span>
+                        {lang === "zh-TW" ? t("language.traditionalChinese") : t("language.simplifiedChinese")}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
+                  aria-label={t("actions.switchTheme")}
+                  onClick={handleThemeToggle}
+                >
+                  {mounted ? (
+                    activeTheme === "dark" ? (
+                      <SunIcon size={18} />
+                    ) : (
+                      <MoonIcon size={18} />
+                    )
                   ) : (
-                    <MoonIcon size={18} />
-                  )
-                ) : (
-                  <SunIcon size={18} />
-                )}
-              </Button>
+                    <SunIcon size={18} />
+                  )}
+                </Button>
+              </div>
+
+              <div className="flex sm:hidden items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
+                      aria-label={t("actions.settings")}
+                    >
+                      <GearIcon size={18} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>{t("actions.settings")}</DropdownMenuLabel>
+                    <DropdownMenuItem onClick={handleThemeToggle}>
+                      {activeTheme === "dark" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
+                      {t("actions.theme")}: {activeTheme === "dark" ? t("actions.themeLight") : t("actions.themeDark")}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuLabel>{t("actions.language")}</DropdownMenuLabel>
+                    {(["zh-TW", "zh-CN"] as AppLanguage[]).map((lang) => (
+                      <DropdownMenuItem
+                        key={lang}
+                        onSelect={() => void handleLanguageChange(lang)}
+                        className={`gap-2 cursor-pointer ${
+                          language === lang
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <span className="w-4 shrink-0">
+                          {language === lang && <CheckIcon size={14} weight="bold" />}
+                        </span>
+                        {lang === "zh-TW" ? t("language.traditionalChinese") : t("language.simplifiedChinese")}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleLogout}
                 className="shrink-0 text-card-foreground hover:text-destructive rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
-                aria-label="登出"
+                aria-label={t("actions.logout")}
               >
                 <SignOutIcon size={20} />
               </Button>

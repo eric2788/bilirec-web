@@ -9,6 +9,7 @@ import { useRole } from '@/lib/role-context'
 import { getLiveTimeMeta, normalizeText } from '@/lib/utils'
 import { RoomConfigDialog } from '@/components/RoomConfigDialog'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface SubscribeCardProps {
   roomInfo: RoomInfo
@@ -18,21 +19,22 @@ interface SubscribeCardProps {
 }
 
 export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, onStartRecord }: SubscribeCardProps) {
+  const { t } = useTranslation()
   const { isReadOnly } = useRole()
   const [isLoading, setIsLoading] = useState(false)
   const [isUnsubDialogOpen, setIsUnsubDialogOpen] = useState(false)
   const [isStartRecordDialogOpen, setIsStartRecordDialogOpen] = useState(false)
   const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false)
-  const cleanTitle = normalizeText(roomInfo.title) || '載入中...'
+  const cleanTitle = normalizeText(roomInfo.title) || t('subscribeCard.loadingTitle')
   const cleanDescription = normalizeText(roomInfo.description)
   const liveTimeMeta = getLiveTimeMeta(roomInfo.live_time)
 
   const handleCopyRoomId = async () => {
     try {
       await navigator.clipboard.writeText(String(roomInfo.room_id))
-      toast.success(`已複製 直播間 ID: ${roomInfo.room_id}`, { position: 'bottom-center' })
+      toast.success(t('toast.copyRoomIdSuccess', { roomId: roomInfo.room_id }), { position: 'bottom-center' })
     } catch {
-      toast.error('複製 直播間 ID 失敗', { position: 'bottom-center' })
+      toast.error(t('toast.copyRoomIdFailed'), { position: 'bottom-center' })
     }
   }
 
@@ -64,20 +66,20 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
     if (roomInfo.lock_status === 1) {
       return (
         <Badge variant="destructive">
-          已封禁
+          {t('subscribeCard.banned')}
         </Badge>
       )
     }
     if (roomInfo.live_status === 1) {
       return (
         <Badge className="relative overflow-visible bg-accent text-accent-foreground">
-          直播中
+          {t('subscribeCard.live')}
         </Badge>
       )
     }
     return (
       <Badge variant="secondary">
-        未開播
+        {t('subscribeCard.offline')}
       </Badge>
     )
   }
@@ -108,15 +110,15 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                   <div className="flex max-w-full items-center gap-1.5">
                     <div className="min-w-0 flex items-center gap-1.5">
                       <p className="font-semibold text-card-foreground truncate max-w-[13.5rem] sm:max-w-[15rem] lg:max-w-[17rem]">
-                        {roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}
+                        {roomInfo.uname ?? t('subscribeCard.roomFallback', { roomId: roomInfo.room_id })}
                       </p>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-                        title={`複製 直播間 ID: ${roomInfo.room_id}`}
-                        aria-label={`複製 直播間 ID ${roomInfo.room_id}`}
+                        title={t('subscribeCard.copyRoomIdTitle', { roomId: roomInfo.room_id })}
+                        aria-label={t('subscribeCard.copyRoomIdAria', { roomId: roomInfo.room_id })}
                         onClick={handleCopyRoomId}
                       >
                         <CopySimpleIcon size={12} />
@@ -128,8 +130,8 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                         variant="ghost"
                         size="icon"
                         className="ml-auto size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground sm:hidden"
-                        title="房間配置"
-                        aria-label={`打開直播間 ${roomInfo.room_id} 的房間配置`}
+                        title={t('subscribeCard.roomConfig')}
+                        aria-label={t('subscribeCard.roomConfigAria', { roomId: roomInfo.room_id })}
                         onClick={() => setIsConfigDialogOpen(true)}
                       >
                         <GearSixIcon size={12} />
@@ -144,7 +146,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                       <Badge
                         variant="outline"
                         className="border-accent/40 bg-accent/10 text-accent"
-                        title={`開播時間: ${liveTimeMeta.title}`}
+                        title={t('subscribeCard.liveStartedAt', { time: liveTimeMeta.title })}
                       >
                         <ClockIcon size={14} weight="bold" />
                         {liveTimeMeta.relativeLabel}
@@ -158,7 +160,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                   {roomInfo.online !== undefined && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <UserIcon size={16} />
-                      <span className="font-mono" title="在線人數">
+                      <span className="font-mono" title={t('subscribeCard.onlineCount')}>
                         {roomInfo.online.toLocaleString()}
                       </span>
                     </div>
@@ -174,7 +176,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                 {roomInfo.online !== undefined && (
                   <div className="flex items-center gap-2">
                     <UserIcon size={16} />
-                    <span className="font-mono" title="在線人數">
+                    <span className="font-mono" title={t('subscribeCard.onlineCount')}>
                       {roomInfo.online.toLocaleString()}
                     </span>
                   </div>
@@ -211,7 +213,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                   rel="noopener noreferrer"
                 >
                   <ArrowSquareOutIcon size={18} />
-                  進入直播間
+                  {t('subscribeCard.enterLiveRoom')}
                 </a>
               </Button>
 
@@ -223,7 +225,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                 variant="default"
               >
                 <PlayIcon size={20} />
-                {isRecording ? '錄製中' : '啓動錄製'}
+                {isRecording ? t('subscribeCard.recording') : t('subscribeCard.startRecording')}
               </Button>
               )}
             </>
@@ -238,7 +240,7 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                 className="subscribe-card-action-btn w-full sm:flex-1 transition-all bg-red-600 text-white hover:bg-red-500 hover:shadow-lg"
               >
                 <TrashIcon size={18} />
-                取消訂閱
+                {t('subscribeCard.unsubscribe')}
               </Button>
 
               <Button
@@ -246,8 +248,8 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
                 variant="outline"
                 size="icon"
                 className="subscribe-card-gear-desktop hidden sm:inline-flex shrink-0 sm:ml-auto"
-                title="房間配置"
-                aria-label={`打開直播間 ${roomInfo.room_id} 的房間配置`}
+                title={t('subscribeCard.roomConfig')}
+                aria-label={t('subscribeCard.roomConfigAria', { roomId: roomInfo.room_id })}
                 onClick={() => setIsConfigDialogOpen(true)}
               >
                 <GearSixIcon size={16} />
@@ -259,17 +261,19 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
         <Dialog open={isUnsubDialogOpen} onOpenChange={setIsUnsubDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>確認取消訂閱</DialogTitle>
+              <DialogTitle>{t('subscribeCard.unsubTitle')}</DialogTitle>
               <DialogDescription>
-                確定要取消訂閱「{roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}」嗎？
+                {t('subscribeCard.unsubDescription', {
+                  name: roomInfo.uname ?? t('subscribeCard.roomFallback', { roomId: roomInfo.room_id })
+                })}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setIsUnsubDialogOpen(false)} disabled={isLoading}>
-                取消
+                {t('fileCard.cancel')}
               </Button>
               <Button variant="destructive" onClick={confirmUnsubscribe} disabled={isLoading}>
-                {isLoading ? '處理中…' : '確認取消'}
+                {isLoading ? t('subscribeCard.processing') : t('subscribeCard.confirmCancel')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -278,17 +282,19 @@ export function SubscribeCard({ roomInfo, isRecording = false, onUnsubscribe, on
         <Dialog open={isStartRecordDialogOpen} onOpenChange={setIsStartRecordDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>確認啓動錄製</DialogTitle>
+              <DialogTitle>{t('subscribeCard.startTitle')}</DialogTitle>
               <DialogDescription>
-                確定要啓動錄製「{roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}」嗎？
+                {t('subscribeCard.startDescription', {
+                  name: roomInfo.uname ?? t('subscribeCard.roomFallback', { roomId: roomInfo.room_id })
+                })}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setIsStartRecordDialogOpen(false)} disabled={isLoading}>
-                取消
+                {t('fileCard.cancel')}
               </Button>
               <Button onClick={confirmStartRecord} disabled={isLoading}>
-                {isLoading ? '處理中…' : '確認啓動'}
+                {isLoading ? t('subscribeCard.processing') : t('subscribeCard.confirmStart')}
               </Button>
             </DialogFooter>
           </DialogContent>

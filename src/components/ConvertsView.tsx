@@ -7,7 +7,9 @@ import type { ConvertQueue } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { SwapIcon } from '@phosphor-icons/react'
 import { usePageVisibility } from '@/hooks/use-visibility'
+import { useTranslation } from 'react-i18next'
 export function ConvertsView() {
+  const { t } = useTranslation()
   const [tasks, setTasks] = useState<ConvertQueue[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -29,11 +31,11 @@ export function ConvertsView() {
       setTasks(Array.isArray(data) ? data : [])
     } catch (error: any) {
       console.error('Failed to fetch convert tasks:', error)
-      toast.error('無法載入轉換任務')
+      toast.error(t('convertsView.loadError'))
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [t])
 
   useEffect(() => {
     if (!isVisible) {
@@ -55,7 +57,7 @@ export function ConvertsView() {
     <div className="flex flex-col h-full">
       <div className="sticky top-0 bg-background z-10 p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-bold">轉換任務</h2>
+          <h2 className="text-xl font-bold">{t('convertsView.title')}</h2>
         </div>
       </div>
 
@@ -69,8 +71,8 @@ export function ConvertsView() {
                 <SwapIcon size={40} />
               </span>
             )}
-            title="沒有正在轉換的任務"
-            description="當有轉換任務執行時，會在此處顯示"
+            title={t('convertsView.emptyTitle')}
+            description={t('convertsView.emptyDescription')}
           />
         ) : (
           <div className="space-y-3">

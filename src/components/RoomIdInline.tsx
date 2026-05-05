@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
+import { useTranslation } from 'react-i18next'
 
 interface RoomIdInlineProps {
   roomId: number
@@ -14,12 +15,14 @@ interface RoomIdInlineProps {
 const triggerClassName = 'h-6 rounded-md border-border/70 bg-muted/40 px-1.5 text-[10px] font-semibold tracking-wide text-muted-foreground hover:bg-muted/70'
 
 export function RoomIdInline({ roomId, className }: RoomIdInlineProps) {
+  const { t } = useTranslation()
+
   const copyRoomId = async () => {
     try {
       await navigator.clipboard.writeText(String(roomId))
-      toast.success(`已複製 直播間 ID: ${roomId}`, { position: 'bottom-center' })
+      toast.success(t('toast.copyRoomIdSuccess', { roomId }), { position: 'bottom-center' })
     } catch {
-      toast.error('複製 直播間 ID 失敗', { position: 'bottom-center' })
+      toast.error(t('toast.copyRoomIdFailed'), { position: 'bottom-center' })
     }
   }
 
@@ -29,7 +32,7 @@ export function RoomIdInline({ roomId, className }: RoomIdInlineProps) {
         <Badge
           variant="outline"
           className={cn(triggerClassName, className)}
-          aria-label={`顯示 直播間 ID ${roomId}`}
+          aria-label={t('roomIdInline.showAria', { roomId })}
         >
           ID
         </Badge>
@@ -37,7 +40,7 @@ export function RoomIdInline({ roomId, className }: RoomIdInlineProps) {
       <HoverCardContent side="bottom" align="end" sideOffset={8} className="w-auto min-w-44 border-zinc-700/80 bg-zinc-950 text-zinc-100 p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] uppercase tracking-wide text-zinc-400">直播間 ID</p>
+            <p className="text-[10px] uppercase tracking-wide text-zinc-400">{t('roomIdInline.label')}</p>
             <p className="font-mono text-sm text-zinc-100">{roomId}</p>
           </div>
           <Button
@@ -45,11 +48,11 @@ export function RoomIdInline({ roomId, className }: RoomIdInlineProps) {
             variant="secondary"
             size="sm"
             className="h-7 gap-1.5 bg-zinc-800 text-zinc-100 hover:bg-zinc-700"
-            aria-label={`複製 直播間 ID ${roomId}`}
+            aria-label={t('roomIdInline.copyAria', { roomId })}
             onClick={copyRoomId}
           >
             <CopySimpleIcon size={12} />
-            複製
+            {t('roomIdInline.copy')}
           </Button>
         </div>
       </HoverCardContent>

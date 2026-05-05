@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 import { FileIcon, SwapIcon, BellIcon } from '@phosphor-icons/react'
 import { DiskUsageDisplay } from './DiskUsageDisplay'
 import type { DiskUsage } from '@/lib/types'
+import { useTranslation } from 'react-i18next'
 
 type LeftSidebarProps = {
   activeTab: 'records' | 'files' | 'converts' | 'subscribe'
@@ -10,6 +11,8 @@ type LeftSidebarProps = {
 }
 
 export function LeftSidebar({ activeTab, onTabChange, diskUsage }: LeftSidebarProps) {
+  const { t } = useTranslation()
+
   return (
     <aside className="hidden lg:flex lg:flex-col w-56 h-full p-4 border-r border-border bg-sidebar/95 text-sidebar-foreground">
       <nav className="flex flex-col gap-2 mt-2 flex-1">
@@ -29,7 +32,7 @@ export function LeftSidebar({ activeTab, onTabChange, diskUsage }: LeftSidebarPr
               <circle cx="12" cy="12" r="3" fill="currentColor" />
             </svg>
           </span>
-          <span>錄製管理</span>
+          <span>{t('nav.records')}</span>
         </button>
 
         <button
@@ -43,7 +46,7 @@ export function LeftSidebar({ activeTab, onTabChange, diskUsage }: LeftSidebarPr
           )}
         >
           <span className="shrink-0"><FileIcon size={18} weight="bold" /></span>
-          <span>錄製檔案</span>
+          <span>{t('nav.files')}</span>
         </button>
 
         <button
@@ -57,7 +60,7 @@ export function LeftSidebar({ activeTab, onTabChange, diskUsage }: LeftSidebarPr
           )}
         >
           <span className="shrink-0"><SwapIcon size={18} weight="bold" /></span>
-          <span>轉換任務</span>
+          <span>{t('nav.converts')}</span>
         </button>
 
         <button
@@ -71,7 +74,7 @@ export function LeftSidebar({ activeTab, onTabChange, diskUsage }: LeftSidebarPr
           )}
         >
           <span className="shrink-0"><BellIcon size={18} weight="bold" /></span>
-          <span>訂閱管理</span>
+          <span>{t('nav.subscribe')}</span>
         </button>
       </nav>
 

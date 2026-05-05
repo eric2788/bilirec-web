@@ -13,8 +13,10 @@ interface RecordCardProps {
   task: RecordTask
   onStop: (roomId: number) => void
 }
+import { useTranslation } from 'react-i18next'
 
 export function RecordCard({ task, onStop }: RecordCardProps) {
+  const { t } = useTranslation()
   const { isReadOnly } = useRole()
   const [isLoading, setIsLoading] = useState(false)
   const [isStopDialogOpen, setIsStopDialogOpen] = useState(false)
@@ -23,9 +25,9 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
   const handleCopyRoomId = async () => {
     try {
       await navigator.clipboard.writeText(String(roomId))
-      toast.success(`已複製 直播間 ID: ${roomId}`, { position: 'bottom-center' })
+      toast.success(t('toast.copyRoomIdSuccess', { roomId }), { position: 'bottom-center' })
     } catch {
-      toast.error('複製 直播間 ID 失敗', { position: 'bottom-center' })
+      toast.error(t('toast.copyRoomIdFailed'), { position: 'bottom-center' })
     }
   }
 
@@ -50,7 +52,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
       case 'recording':
         return (
           <Badge className="relative overflow-visible bg-accent text-accent-foreground">
-            錄製中
+            {t('recordCard.recording')}
             <span className="pointer-events-none absolute -right-1 -top-1 flex size-2.5" aria-hidden="true">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
               <span className="relative inline-flex size-2.5 rounded-full bg-red-500" />
@@ -60,13 +62,13 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
       case 'recovering':
         return (
           <Badge variant="outline" className="border-accent text-accent animate-pulse">
-            恢復中
+            {t('recordCard.recovering')}
           </Badge>
         )
       case 'idle':
         return (
           <Badge variant="secondary">
-            空閒
+            {t('recordCard.idle')}
           </Badge>
         )
     }
@@ -97,22 +99,22 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
                 <div className="min-w-0">
                   <div className="inline-flex max-w-full items-center gap-1.5">
                     <p className="font-semibold text-card-foreground record-title truncate max-w-full">
-                      { task.roomInfo?.uname ?? `直播間 ${task.roomInfo?.room_id}`}
+                      { task.roomInfo?.uname ?? t('recordCard.roomFallback', { roomId: task.roomInfo?.room_id })}
                     </p>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
                       className="size-6 shrink-0 rounded-full text-muted-foreground hover:text-foreground"
-                      title={`複製 直播間 ID: ${roomId}`}
-                      aria-label={`複製 直播間 ID ${roomId}`}
+                      title={t('recordCard.copyRoomIdTitle', { roomId })}
+                      aria-label={t('recordCard.copyRoomIdAria', { roomId })}
                       onClick={handleCopyRoomId}
                     >
                       <CopySimpleIcon size={12} />
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">
-                    {task.roomInfo?.title || '載入中...'}
+                    {task.roomInfo?.title || t('recordCard.loadingTitle')}
                   </p>
                 </div>
 
@@ -120,7 +122,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
                   {task.roomInfo?.online !== undefined && (
                     <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
                       <UserIcon size={16} />
-                      <span className="font-mono" title="在線人數">{(task.roomInfo.online ?? 0).toLocaleString()}</span>
+                      <span className="font-mono" title={t('recordCard.onlineCount')}>{(task.roomInfo.online ?? 0).toLocaleString()}</span>
                     </div>
                   )}
 
@@ -144,7 +146,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
             <div className="mt-2 sm:hidden flex items-center gap-2 text-sm text-muted-foreground justify-between w-full">
               <div className="flex items-center gap-2">
                 <UserIcon size={16} />
-                <span className="font-mono" title="在線人數">{(task.roomInfo.online ?? 0).toLocaleString()}</span>
+                <span className="font-mono" title={t('recordCard.onlineCount')}>{(task.roomInfo.online ?? 0).toLocaleString()}</span>
               </div>
 
               {/* show badge on mobile row too (aligned right) */}
@@ -158,7 +160,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
         {task.status === 'recording' && (
           <div className="grid grid-cols-2 gap-2 text-sm">
             {task.recordedTime !== undefined && (
-              <div className="flex items-center gap-2 text-muted-foreground" title="預計錄製時間">
+              <div className="flex items-center gap-2 text-muted-foreground" title={t('recordCard.estimatedDuration')}>
                 <ClockIcon size={16} />
                 <span className="font-mono">{formatDuration(task.recordedTime)}</span>
               </div>
@@ -191,7 +193,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
                 rel="noopener noreferrer"
               >
                 <ArrowSquareOutIcon size={18} />
-                進入直播間
+                {t('recordCard.enterLiveRoom')}
               </a>
             </Button>
 
@@ -203,7 +205,7 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
               className="w-full sm:w-1/2 transition-all hover:bg-destructive/90 hover:shadow-md hover:ring-1 hover:ring-destructive/30"
             >
               <StopIcon size={20} />
-              停止錄製
+              {t('recordCard.stopRecording')}
             </Button>
             )}
           </div>
@@ -212,17 +214,19 @@ export function RecordCard({ task, onStop }: RecordCardProps) {
         <Dialog open={isStopDialogOpen} onOpenChange={setIsStopDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>確認停止錄製</DialogTitle>
+              <DialogTitle>{t('recordCard.stopConfirmTitle')}</DialogTitle>
               <DialogDescription>
-                確定要停止錄製「{task.roomInfo?.uname ?? `直播間 ${task.roomInfo?.room_id ?? task.roomId}`}」嗎？
+                {t('recordCard.stopConfirmDescription', {
+                  name: task.roomInfo?.uname ?? t('recordCard.roomFallback', { roomId: task.roomInfo?.room_id ?? task.roomId })
+                })}
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
               <Button variant="ghost" onClick={() => setIsStopDialogOpen(false)} disabled={isLoading}>
-                取消
+                {t('fileCard.cancel')}
               </Button>
               <Button variant="destructive" onClick={confirmStop} disabled={isLoading}>
-                {isLoading ? '處理中…' : '確認停止'}
+                {isLoading ? t('recordCard.processing') : t('recordCard.confirmStop')}
               </Button>
             </DialogFooter>
           </DialogContent>

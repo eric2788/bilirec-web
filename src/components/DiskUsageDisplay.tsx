@@ -3,6 +3,7 @@ import type { DiskUsage } from '@/lib/types'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { HardDrivesIcon } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 
 interface DiskUsageDisplayProps {
   diskUsage: DiskUsage | null
@@ -18,6 +19,7 @@ function formatBytes(bytes: number): string {
 }
 
 export function DiskUsageDisplay({ diskUsage, compact = false }: DiskUsageDisplayProps) {
+  const { t } = useTranslation()
   const [isOpen, setIsOpen] = useState(false)
 
   const usagePercent = useMemo(() => {
@@ -61,13 +63,13 @@ export function DiskUsageDisplay({ diskUsage, compact = false }: DiskUsageDispla
                 <span className="text-muted-foreground">
                   <HardDrivesIcon size={20} />
                 </span>
-                磁碟空間
+                {t('disk.title')}
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">使用率</span>
+                  <span className="text-sm font-medium">{t('disk.usage')}</span>
                   <span className="text-sm font-semibold text-primary">{usagePercent}%</span>
                 </div>
                 <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
@@ -79,16 +81,16 @@ export function DiskUsageDisplay({ diskUsage, compact = false }: DiskUsageDispla
               </div>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-muted-foreground text-xs mb-1">已用</p>
+                  <p className="text-muted-foreground text-xs mb-1">{t('disk.used')}</p>
                   <p className="font-semibold">{usedFormatted}</p>
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-xs mb-1">可用</p>
+                  <p className="text-muted-foreground text-xs mb-1">{t('disk.free')}</p>
                   <p className="font-semibold text-green-600 dark:text-green-400">{freeFormatted}</p>
                 </div>
               </div>
               <div>
-                <p className="text-muted-foreground text-xs mb-1">總計</p>
+                <p className="text-muted-foreground text-xs mb-1">{t('disk.total')}</p>
                 <p className="font-semibold">{totalFormatted}</p>
               </div>
             </div>
@@ -121,9 +123,9 @@ export function DiskUsageDisplay({ diskUsage, compact = false }: DiskUsageDispla
         </TooltipTrigger>
         <TooltipContent side="top" className="text-xs">
           <div className="space-y-1">
-            <p>已用: {usedFormatted}</p>
-            <p>可用: {freeFormatted}</p>
-            <p>總計: {totalFormatted}</p>
+            <p>{t('disk.used')}: {usedFormatted}</p>
+            <p>{t('disk.free')}: {freeFormatted}</p>
+            <p>{t('disk.total')}: {totalFormatted}</p>
           </div>
         </TooltipContent>
       </Tooltip>

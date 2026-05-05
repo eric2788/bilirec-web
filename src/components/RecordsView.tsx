@@ -9,11 +9,13 @@ import { LoadingScreen } from './LoadingScreen'
 import { usePageVisibility } from '@/hooks/use-visibility'
 import { useRole } from '@/lib/role-context'
 import useSWR from 'swr'
+import { useTranslation } from 'react-i18next'
 interface RecordsViewProps {
   onRefresh?: () => void
 }
 
 export function RecordsView({ onRefresh }: RecordsViewProps) {
+  const { t } = useTranslation()
   const { isReadOnly } = useRole()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const scrollPositionRef = useRef(0)
@@ -51,9 +53,9 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
   useEffect(() => {
     if (error) {
       console.error('Failed to fetch tasks:', error)
-      toast.error('無法載入錄製任務')
+      toast.error(t('recordsView.loadError'))
     }
-  }, [error])
+  }, [error, t])
 
   useEffect(() => {
     if (scrollContainerRef.current && scrollPositionRef.current > 0) {
@@ -66,10 +68,10 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
       await apiClient.startRecord({ roomId: roomInfo.room_id })
     } catch (error: any) {
       console.error('Failed to start record:', error)
-      toast.error(error.response?.data || '啟動錄製失敗')
+      toast.error(error.response?.data || t('recordsView.startFailed'))
       throw error
     }
-    toast.success('已開始錄製')
+    toast.success(t('recordsView.startSuccess'))
     await mutate()
     onRefresh?.()
   }
@@ -77,12 +79,12 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
   const handleStop = async (roomId: number) => {
     try {
       await apiClient.stopRecord(roomId)
-      toast.success('已停止錄製')
+      toast.success(t('recordsView.stopSuccess'))
       await mutate()
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to stop record:', error)
-      toast.error(error.response?.data || '停止錄製失敗')
+      toast.error(error.response?.data || t('recordsView.stopFailed'))
     }
   }
 
@@ -90,15 +92,15 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
     <div className="flex flex-col h-full">
       <div className="sticky top-0 bg-background z-10 p-4 border-b border-border">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xl font-bold">錄製管理</h2>
+          <h2 className="text-xl font-bold">{t('recordsView.title')}</h2>
           {!isReadOnly && (
             <RoomIdInputWithConfirmDialog
-              triggerLabel="添加"
-              inputDialogTitle="添加錄製任務"
-              confirmDialogTitle="確認錄製對象"
-              confirmDialogDescription="請確認這是你要錄製的直播間。"
-              confirmLabel="確認錄製"
-              confirmLoadingLabel="添加中..."
+              triggerLabel={t('recordsView.add')}
+              inputDialogTitle={t('recordsView.addTaskTitle')}
+              confirmDialogTitle={t('recordsView.confirmTargetTitle')}
+              confirmDialogDescription={t('recordsView.confirmTargetDescription')}
+              confirmLabel={t('recordsView.confirmRecord')}
+              confirmLoadingLabel={t('recordsView.adding')}
               onConfirm={handleConfirmRecord}
             />
           )}
@@ -116,8 +118,8 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
                 <circle cx="12" cy="12" r="3" fill="currentColor" />
               </svg>
             }
-            title="還沒有錄製任務"
-            description="點擊右上角的「添加」按鈕開始錄製"
+            title={t('recordsView.emptyTitle')}
+            description={t('recordsView.emptyDescription')}
           />
         ) : (
           <div className="cards-grid grid gap-4">

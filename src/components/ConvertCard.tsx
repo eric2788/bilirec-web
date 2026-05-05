@@ -10,6 +10,7 @@ import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import { useRole } from '@/lib/role-context'
 import { formatFileSize } from "@/lib/utils";
+import { useTranslation } from 'react-i18next'
 
 interface ConvertCardProps {
   task: ConvertQueue
@@ -17,23 +18,24 @@ interface ConvertCardProps {
 }
 
 export function ConvertCard({ task, onCancel }: ConvertCardProps) {
+  const { t } = useTranslation()
   const { isReadOnly } = useRole()
   const [isCancelling, setIsCancelling] = useState(false)
 
   const baseInput = task.input_path.split(/[\\\/]/).pop() || task.input_path
 
   const handleCancel = async () => {
-    const ok = window.confirm(`確定要取消轉換任務 ${task.task_id} 嗎？`)
+    const ok = window.confirm(t('convertCard.cancelConfirm', { taskId: task.task_id }))
     if (!ok) return
 
     setIsCancelling(true)
     try {
       await apiClient.deleteConvertTask(task.task_id)
-      toast.success('已取消轉換任務')
+      toast.success(t('convertCard.cancelSuccess'))
       onCancel?.()
     } catch (error: any) {
       console.error('Failed to cancel convert task:', error)
-      toast.error(error.response?.data || '取消轉換任務失敗')
+      toast.error(error.response?.data || t('convertCard.cancelFailed'))
     } finally {
       setIsCancelling(false)
     }
@@ -50,13 +52,13 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
         <div className="absolute right-3 top-3 sm:hidden">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button size="icon" variant="ghost" aria-label="更多操作" className={isCancelling ? 'opacity-50 pointer-events-none' : ''}>
+              <Button size="icon" variant="ghost" aria-label={t('convertCard.moreActions')} className={isCancelling ? 'opacity-50 pointer-events-none' : ''}>
                 <MoreVerticalIcon className="size-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem variant="destructive" onSelect={() => { handleCancel(); }} disabled={isCancelling}>
-                取消轉換
+                {t('convertCard.cancelConvert')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -77,7 +79,7 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
                 <Badge variant="secondary" className="shrink-0 text-sm sm:text-xs">{task.provider === 'cloudconvert' ? 'CloudConvert' : 'FFmpeg'}</Badge>
               )}
               {task.delete_source && (
-                <Badge variant="destructive" className="shrink-0 text-sm sm:text-xs border border-transparent">轉後刪源</Badge>
+                <Badge variant="destructive" className="shrink-0 text-sm sm:text-xs border border-transparent">{t('convertCard.deleteAfterConvert')}</Badge>
               )} 
               <Badge variant="outline" className="shrink-0 text-sm sm:text-xs ring-[0.2px] ring-gray-900 dark:ring-gray-200">{task.input_format.toUpperCase()} → {task.output_format.toUpperCase()}</Badge>
               {/* Desktop: show cancel button */}
@@ -89,8 +91,8 @@ export function ConvertCard({ task, onCancel }: ConvertCardProps) {
                   className={isCancelling ? 'opacity-50 pointer-events-none' : ''}
                   onClick={handleCancel}
                   disabled={isCancelling}
-                  aria-label={`取消轉換 ${task.task_id}`}
-                  title="取消"
+                  aria-label={t('convertCard.cancelAria', { taskId: task.task_id })}
+                  title={t('convertCard.cancelTitle')}
                 >
                   <XIcon size={16} />
                 </Button>

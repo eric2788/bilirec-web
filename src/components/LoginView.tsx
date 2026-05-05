@@ -9,12 +9,14 @@ import { toast } from 'sonner'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { InfoIcon } from '@phosphor-icons/react'
 import type { LoginResponse } from '@/lib/types'
+import { useTranslation } from 'react-i18next'
 
 interface LoginViewProps {
   onLoginSuccess: (response: LoginResponse) => void
 }
 
 export function LoginView({ onLoginSuccess }: LoginViewProps) {
+  const { t } = useTranslation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [serverUrl, setServerUrl] = useState('http://localhost:8080')
@@ -34,13 +36,13 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
     const url = serverUrl || 'http://localhost:8080'
     
     if (!url.trim()) {
-      toast.error('請輸入伺服器地址')
+      toast.error(t('login.errorNeedServer'))
       return
     }
 
     // If username provided, require password as well
     if (username.trim() && !password.trim()) {
-      toast.error('請輸入密碼')
+      toast.error(t('login.errorNeedPassword'))
       return
     }
 
@@ -55,14 +57,14 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
       if (!username.trim() && !password.trim()) {
         try {
           await apiClient.getRecords()
-          toast.success('連線成功 (無需登入)')
+          toast.success(t('login.connectNoAuth'))
           onLoginSuccess({ user: '', role: 'admin' })
         } catch (err: any) {
           console.error('Unauthenticated access failed:', err)
           if (err?.status === 401) {
-            toast.error('伺服器需要登入，請提供憑證')
+            toast.error(t('login.errorNeedCredential'))
           } else {
-            toast.error(err?.message || '連線失敗，請檢查伺服器地址')
+            toast.error(err?.message || t('login.errorConnect'))
           }
         }
         return
@@ -77,20 +79,20 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
         // If login failed, fallback to try unauthenticated access (in case server does not require auth)
         try {
           await apiClient.getRecords()
-          toast.success('連線成功 (無需登入)')
+          toast.success(t('login.connectNoAuth'))
           onLoginSuccess({ user: '', role: 'admin' })
         } catch (err: any) {
           console.error('Unauthenticated access failed:', err)
           if (err?.status === 401) {
-            toast.error('登入失敗，請檢查用戶名和密碼')
+            toast.error(t('login.errorLoginInvalid'))
           } else {
-            toast.error(err?.message || '連線失敗，請檢查伺服器地址')
+            toast.error(err?.message || t('login.errorConnect'))
           }
         }
       }
     } catch (error: any) {
       console.error('Login error:', error)
-      toast.error(error.response?.data || '登入失敗，請檢查伺服器地址和憑證')
+      toast.error(error.response?.data || t('login.errorLoginGeneral'))
     } finally {
       setIsLoading(false)
     }
@@ -106,20 +108,20 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
               <circle cx="12" cy="12" r="3" fill="currentColor" />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold">Bilibili 錄製管理</h1>
-          <p className="text-sm text-muted-foreground mt-2">連接到您的錄製伺服器</p>
+          <h1 className="text-2xl font-bold">{t('login.title')}</h1>
+          <p className="text-sm text-muted-foreground mt-2">{t('login.description')}</p>
         </div>
 
         <Alert className="mb-4">
           <InfoIcon size={16} />
           <AlertDescription className="text-xs">
-            請輸入您的帳號和密碼以登入錄製伺服器
+            {t('login.hint')}
           </AlertDescription>
         </Alert>
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="server-url">伺服器地址</Label>
+            <Label htmlFor="server-url">{t('login.serverUrl')}</Label>
             <Input
               id="server-url"
               type="text"
@@ -131,11 +133,11 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="username">用戶名</Label>
+            <Label htmlFor="username">{t('login.username')}</Label>
             <Input
               id="username"
               type="text"
-              placeholder="輸入用戶名"
+              placeholder={t('login.usernamePlaceholder')}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={isLoading}
@@ -144,11 +146,11 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">密碼</Label>
+            <Label htmlFor="password">{t('login.password')}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="輸入密碼"
+              placeholder={t('login.passwordPlaceholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -161,7 +163,7 @@ export function LoginView({ onLoginSuccess }: LoginViewProps) {
             className="w-full" 
             disabled={isLoading}
           >
-            {isLoading ? '登入中...' : '登入'}
+            {isLoading ? t('login.loading') : t('login.submit')}
           </Button>
         </form>
       </Card>

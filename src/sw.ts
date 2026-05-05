@@ -7,6 +7,8 @@
  */
 
 import { sharedStore } from "@/lib/shared-store";
+import { resources } from "@/i18n/resources";
+import { normalizeLanguage, LANGUAGE_STORAGE_KEY, type AppLanguage } from "@/lib/language";
 
 declare const self: ServiceWorkerGlobalScope & {
   // Injected by vite-plugin-pwa at build time
@@ -161,10 +163,14 @@ self.addEventListener("fetch", (event) => {
           if (cachedResponse) {
             return cachedResponse;
           }
-          return new Response("Offline - resource not available", {
-            status: 503,
-            statusText: "Service Unavailable"
-          });
+          const fallbackBodyPromise = swT('sw.offlineResource');
+          const fallbackStatusPromise = swT('sw.serviceUnavailable');
+          return Promise.all([fallbackBodyPromise, fallbackStatusPromise]).then(([body, statusText]) =>
+            new Response(body, {
+              status: 503,
+              statusText
+            })
+          );
         });
       })
   );
@@ -183,10 +189,13 @@ self.addEventListener("push", (event) => {
   }
 
   const roomId = payload.room_id;
-  const notification = buildLiveNotification(payload);
-  const actions = buildNotificationActions();
 
-  const notificationOptions: ExtendedNotificationOptions = {
+  pushEvent.waitUntil(
+    (async () => {
+      const notification = await buildLiveNotification(payload);
+      const actions = await buildNotificationActions();
+
+      const notificationOptions: ExtendedNotificationOptions = {
     body: notification.body,
     icon: "/icon-192.svg",
     badge: "/icon-192.svg",
@@ -200,17 +209,17 @@ self.addEventListener("push", (event) => {
       appUrl: APP_SUBSCRIBE_URL,
       liveUrl: roomId ? `https://live.bilibili.com/${roomId}` : null
     },
-    actions,
-    renotify: true
-  };
+        actions,
+        renotify: true
+      };
 
-  console.debug(
-    "[SW] showNotification:",
-    notification.title,
-    notificationOptions
-  );
-  pushEvent.waitUntil(
-    self.registration.showNotification(notification.title, notificationOptions)
+      console.debug(
+        "[SW] showNotification:",
+        notification.title,
+        notificationOptions
+      );
+      await self.registration.showNotification(notification.title, notificationOptions);
+    })()
   );
 });
 
@@ -314,21 +323,41 @@ function parsePushPayload(
   }
 }
 
-function buildLiveNotification(payload: PushPayload) {
+function getInterpolationTemplate(key: string, language: AppLanguage): string {
+  const dict = resources[language].common as Record<string, any>;
+  return key.split('.').reduce((acc: any, part: string) => acc?.[part], dict) ?? key;
+}
+
+function interpolate(template: string, values: Record<string, string | number>): string {
+  return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, name: string) => String(values[name] ?? ''));
+}
+
+async function getSwLanguage(): Promise<AppLanguage> {
+  const stored = await sharedStore.get<string>(LANGUAGE_STORAGE_KEY);
+  return normalizeLanguage(stored);
+}
+
+async function swT(key: string, values: Record<string, string | number> = {}): Promise<string> {
+  const language = await getSwLanguage();
+  return interpolate(getInterpolationTemplate(key, language), values);
+}
+
+async function buildLiveNotification(payload: PushPayload) {
   const eventType = payload.type || "live_detected";
   const roomId = payload.room_id;
-  const streamer = payload.streamer_name || "主播";
+  const streamer = payload.streamer_name || (await swT('sw.defaultStreamer'));
   const roomTitle = payload.room_title || "";
 
   const isAutoRecord = eventType === "live_auto_record_started";
-  const titlePrefix = isAutoRecord ? "已開播並開始錄製" : "已開播";
-  const title = `${streamer} ${titlePrefix}`;
+  const title = isAutoRecord
+    ? await swT('sw.titleAutoRecord', { streamer })
+    : await swT('sw.titleLive', { streamer });
 
   const bodyParts: string[] = [];
   if (roomTitle) {
     bodyParts.push(truncateNotificationText(singleLine(roomTitle), 60));
   }
-  const body = bodyParts.join("\n") || "您有新的直播通知";
+  const body = bodyParts.join("\n") || (await swT('sw.bodyDefault'));
 
   return {
     title,
@@ -350,12 +379,12 @@ function truncateNotificationText(value: string, maxLength: number): string {
   return `${value.slice(0, Math.max(0, maxLength - 3)).trimEnd()}...`;
 }
 
-function buildNotificationActions(): NotificationAction[] {
+async function buildNotificationActions(): Promise<NotificationAction[]> {
   // Only one action button to avoid the Android Chrome PWA bug where
   // event.action always resolves to the last action regardless of which
   // button was actually clicked.
   // Clicking the notification body (action === "") opens the app instead.
-  return [{ action: "open-live", title: "進入直播間" }];
+  return [{ action: "open-live", title: await swT('sw.actionOpenLive') }];
 }
 
 async function handlePushSubscriptionChange(event: {

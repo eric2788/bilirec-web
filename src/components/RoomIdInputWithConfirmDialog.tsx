@@ -14,6 +14,7 @@ import { PlusIcon, UserIcon } from '@phosphor-icons/react'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RoomInfo } from '@/lib/types'
+import { useTranslation } from 'react-i18next'
 
 interface RoomIdInputWithConfirmDialogProps {
   triggerLabel: string
@@ -22,10 +23,6 @@ interface RoomIdInputWithConfirmDialogProps {
   confirmDialogDescription: string
   confirmLabel: string
   confirmLoadingLabel?: string
-  /**
-   * Called when user clicks confirm. Should resolve on success (dialog closes),
-   * or throw after showing an error toast (dialog stays open).
-   */
   onConfirm: (roomInfo: RoomInfo) => Promise<void>
 }
 
@@ -35,9 +32,10 @@ export function RoomIdInputWithConfirmDialog({
   confirmDialogTitle,
   confirmDialogDescription,
   confirmLabel,
-  confirmLoadingLabel = '處理中...',
+  confirmLoadingLabel = '',
   onConfirm,
 }: RoomIdInputWithConfirmDialogProps) {
+  const { t } = useTranslation()
   const [roomId, setRoomId] = useState('')
   const [isInputDialogOpen, setIsInputDialogOpen] = useState(false)
   const [isFetchingRoomInfo, setIsFetchingRoomInfo] = useState(false)
@@ -49,7 +47,7 @@ export function RoomIdInputWithConfirmDialog({
   const handlePrepare = async () => {
     const id = parseInt(roomId.trim())
     if (!roomId.trim() || isNaN(id)) {
-      toast.error('請輸入有效的房間 ID')
+      toast.error(t('roomInput.invalidId'))
       return
     }
 
@@ -62,11 +60,11 @@ export function RoomIdInputWithConfirmDialog({
       setIsConfirmDialogOpen(true)
     } catch (error: any) {
       if (error.response?.status === 404) {
-        toast.error('找不到此房間')
+        toast.error(t('roomInput.roomNotFound'))
       } else if (error.response?.status === 400) {
-        toast.error('無效的房間 ID')
+        toast.error(t('roomInput.invalidRoomId'))
       } else {
-        toast.error(error.response?.data || '獲取房間資訊失敗')
+        toast.error(error.response?.data || t('roomInput.fetchFailed'))
       }
     } finally {
       setIsFetchingRoomInfo(false)
@@ -78,13 +76,12 @@ export function RoomIdInputWithConfirmDialog({
     setIsSubmitting(true)
     try {
       await onConfirm(confirmRoomInfo)
-      // success: close confirm dialog and clear state
       setSkipReopenInputDialog(true)
       setIsConfirmDialogOpen(false)
       setConfirmRoomInfo(null)
       setRoomId('')
     } catch {
-      // error toast already shown by the caller; keep confirm dialog open
+      // Error toast is handled by caller.
     } finally {
       setIsSubmitting(false)
     }
@@ -105,7 +102,7 @@ export function RoomIdInputWithConfirmDialog({
     <>
       <Dialog open={isInputDialogOpen} onOpenChange={setIsInputDialogOpen}>
         <DialogTrigger asChild>
-          <Button size="sm">
+          <Button size='sm'>
             <PlusIcon size={20} />
             {triggerLabel}
           </Button>
@@ -114,16 +111,16 @@ export function RoomIdInputWithConfirmDialog({
           <DialogHeader>
             <DialogTitle>{inputDialogTitle}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-4">
+          <div className='space-y-4 pt-4'>
             <Input
-              type="number"
-              placeholder="輸入房間 ID"
+              type='number'
+              placeholder={t('roomInput.inputPlaceholder')}
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handlePrepare()}
             />
-            <Button onClick={handlePrepare} className="w-full" disabled={isFetchingRoomInfo}>
-              {isFetchingRoomInfo ? '獲取房間資訊中...' : '下一步'}
+            <Button onClick={handlePrepare} className='w-full' disabled={isFetchingRoomInfo}>
+              {isFetchingRoomInfo ? t('roomInput.fetching') : t('roomInput.next')}
             </Button>
           </div>
         </DialogContent>
@@ -137,34 +134,34 @@ export function RoomIdInputWithConfirmDialog({
           </DialogHeader>
 
           {confirmRoomInfo && (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               {confirmRoomInfo.cover ? (
-                <div className="overflow-hidden rounded-md bg-muted">
+                <div className='overflow-hidden rounded-md bg-muted'>
                   <img
                     src={confirmRoomInfo.cover}
-                    alt={confirmRoomInfo.uname || `直播間 ${confirmRoomInfo.room_id}`}
-                    referrerPolicy="no-referrer"
-                    className="h-auto w-full"
+                    alt={confirmRoomInfo.uname || t('recordCard.roomFallback', { roomId: confirmRoomInfo.room_id })}
+                    referrerPolicy='no-referrer'
+                    className='h-auto w-full'
                   />
                 </div>
               ) : (
-                <div className="flex h-28 items-center justify-center rounded-md bg-muted">
+                <div className='flex h-28 items-center justify-center rounded-md bg-muted'>
                   <UserIcon size={24} />
                 </div>
               )}
 
-              <div className="space-y-1 text-sm">
+              <div className='space-y-1 text-sm'>
                 <p>
-                  <span className="text-muted-foreground">直播間 ID：</span>
-                  <span className="font-medium">{confirmRoomInfo.room_id}</span>
+                  <span className='text-muted-foreground'>{t('roomInput.roomIdLabel')}</span>
+                  <span className='font-medium'>{confirmRoomInfo.room_id}</span>
                 </p>
                 <p>
-                  <span className="text-muted-foreground">主播名稱：</span>
-                  <span className="font-medium">{confirmRoomInfo.uname || '未知主播'}</span>
+                  <span className='text-muted-foreground'>{t('roomInput.streamerLabel')}</span>
+                  <span className='font-medium'>{confirmRoomInfo.uname || t('roomInput.unknownStreamer')}</span>
                 </p>
                 <p>
-                  <span className="text-muted-foreground">直播標題：</span>
-                  <span className="font-medium">{confirmRoomInfo.title || '無標題'}</span>
+                  <span className='text-muted-foreground'>{t('roomInput.streamTitleLabel')}</span>
+                  <span className='font-medium'>{confirmRoomInfo.title || t('roomInput.noTitle')}</span>
                 </p>
               </div>
             </div>
@@ -172,19 +169,19 @@ export function RoomIdInputWithConfirmDialog({
 
           <DialogFooter>
             <Button
-              type="button"
-              variant="outline"
+              type='button'
+              variant='outline'
               onClick={() => handleConfirmDialogOpenChange(false)}
               disabled={isSubmitting}
             >
-              取消
+              {t('roomInput.cancel')}
             </Button>
             <Button
-              type="button"
+              type='button'
               onClick={handleConfirm}
               disabled={isSubmitting || !confirmRoomInfo}
             >
-              {isSubmitting ? confirmLoadingLabel : confirmLabel}
+              {isSubmitting ? (confirmLoadingLabel || t('roomInput.loadingDefault')) : confirmLabel}
             </Button>
           </DialogFooter>
         </DialogContent>

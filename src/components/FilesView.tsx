@@ -10,6 +10,7 @@ import { CaretLeftIcon, MagnifyingGlassIcon, SpinnerGapIcon } from '@phosphor-ic
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
 import type { RecordFile, RecordFileListResponse } from '@/lib/types'
+import { useTranslation } from 'react-i18next'
 
 type FilesLayoutConfig = {
   pageSize: number
@@ -85,6 +86,7 @@ const CONTENT_PADDING_X = 32
 const ESTIMATED_ROW_HEIGHT = 140
 
 export function FilesView() {
+  const { t } = useTranslation()
   const [currentPath, setCurrentPath] = useState('')
   const [searchInput, setSearchInput] = useState('')
   const [search, setSearch] = useState('')
@@ -233,8 +235,8 @@ export function FilesView() {
   useEffect(() => {
     if (!isError) return
     const err = error as any
-    toast.error('無法載入檔案列表' + (err?.response?.data ? `: ${err.response.data}` : ''))
-  }, [isError, error])
+    toast.error(t('filesView.loadError') + (err?.response?.data ? `: ${err.response.data}` : ''))
+  }, [isError, error, t])
 
   const handleFetchNextPage = useCallback(async () => {
     if (isInitialLoading || isLoadingMore || isSearchTransition || !hasNextPage) return
@@ -290,7 +292,7 @@ export function FilesView() {
                 <CaretLeftIcon size={20} />
               </Button>
             )}
-            <h2 className="text-xl font-bold">錄製檔案</h2>
+            <h2 className="text-xl font-bold">{t('filesView.title')}</h2>
           </div>
 
           <div className="ml-auto w-[200px] sm:w-[280px]">
@@ -301,7 +303,7 @@ export function FilesView() {
               <Input
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="搜尋檔名..."
+                placeholder={t('filesView.searchPlaceholder')}
                 className="pl-9 pr-20"
                 aria-busy={isSearching}
               />
@@ -314,7 +316,7 @@ export function FilesView() {
                 <span className="animate-spin">
                   <SpinnerGapIcon size={14} />
                 </span>
-                <span>搜尋中</span>
+                <span>{t('filesView.searching')}</span>
               </div>
             </div>
           </div>
@@ -357,8 +359,8 @@ export function FilesView() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
                   </svg>
                 }
-                title="還沒有錄製檔案"
-                description="完成錄製後檔案會出現在這裡"
+                title={t('filesView.emptyTitle')}
+                description={t('filesView.emptyDescription')}
               />
             ) : (
               <div style={{ height: `${Math.max(0, rowVirtualizer.getTotalSize() - GRID_GAP)}px`, position: 'relative' }}>
@@ -411,7 +413,7 @@ export function FilesView() {
 
             {!isInitialLoading && displayFiles.length > 0 && (
               <p className="mt-4 text-center text-xs text-muted-foreground">
-                已載入 {displayFiles.length} / {displayTotal}
+                {t('filesView.loadedCount', { loaded: displayFiles.length, total: displayTotal })}
               </p>
             )}
           </div>

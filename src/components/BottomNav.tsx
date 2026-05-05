@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import { SwapIcon, BellIcon } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 
 interface BottomNavProps {
   activeTab: 'records' | 'files' | 'converts' | 'subscribe'
@@ -7,6 +8,8 @@ interface BottomNavProps {
 }
 
 export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
+  const { t } = useTranslation()
+
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border safe-area-bottom z-50 lg:hidden select-none"
@@ -24,7 +27,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
             <circle cx="12" cy="12" r="10" strokeWidth="2" />
             <circle cx="12" cy="12" r="3" fill="currentColor" />
           </svg>
-          <span className="text-xs font-medium">錄製管理</span>
+          <span className="text-xs font-medium">{t('nav.records')}</span>
         </button>
         <button
           onClick={() => onTabChange('files')}
@@ -36,7 +39,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
           </svg>
-          <span className="text-xs font-medium">錄製檔案</span>
+          <span className="text-xs font-medium">{t('nav.files')}</span>
         </button>
         <button
           onClick={() => onTabChange('converts')}
@@ -48,7 +51,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           <span className="w-6 h-6 flex items-center justify-center">
             <SwapIcon size={18} weight="bold" />
           </span>
-          <span className="text-xs font-medium">轉換任務</span>
+          <span className="text-xs font-medium">{t('nav.converts')}</span>
         </button>
         <button
           onClick={() => onTabChange('subscribe')}
@@ -60,7 +63,7 @@ export function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
           <span className="w-6 h-6 flex items-center justify-center">
             <BellIcon size={18} weight="bold" />
           </span>
-          <span className="text-xs font-medium">訂閱管理</span>
+          <span className="text-xs font-medium">{t('nav.subscribe')}</span>
         </button>
       </div>
     </nav>

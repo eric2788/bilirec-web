@@ -14,6 +14,7 @@ import { useScoredSearch } from '@/hooks/use-scored-search'
 import { useRole } from '@/lib/role-context'
 import { normalizeText } from '@/lib/utils'
 import useSWR from 'swr'
+import { useTranslation } from 'react-i18next'
 
 const CARD_MIN_WIDTH = 400
 const GRID_GAP = 16
@@ -27,6 +28,7 @@ interface SubscribesViewProps {
 }
 
 export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps) {
+  const { t } = useTranslation()
   const { isReadOnly } = useRole()
   const [searchInput, setSearchInput] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
@@ -156,9 +158,9 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
   useEffect(() => {
     if (subscribedRoomsError) {
       console.error('Failed to fetch subscribed rooms:', subscribedRoomsError)
-      toast.error('無法載入訂閱列表')
+      toast.error(t('subscribesView.loadError'))
     }
-  }, [subscribedRoomsError])
+  }, [subscribedRoomsError, t])
 
   useEffect(() => {
     if (!scrollContainerRef.current) return
@@ -185,15 +187,15 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
     } catch (error: any) {
       console.error('Failed to subscribe room:', error)
       if (error.response?.status === 409) {
-        toast.error('已訂閱此房間')
+        toast.error(t('subscribesView.duplicated'))
       } else if (error.response?.status === 400) {
-        toast.error('無效的房間 ID')
+        toast.error(t('subscribesView.invalidRoom'))
       } else {
-        toast.error(error.response?.data || '訂閱失敗')
+        toast.error(error.response?.data || t('subscribesView.subscribeFailed'))
       }
       throw error
     }
-    toast.success('已成功訂閱房間')
+    toast.success(t('subscribesView.subscribeSuccess'))
     await mutateSubscribedRoomIds()
     onRefresh?.()
   }
@@ -201,15 +203,15 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
   const handleUnsubscribe = async (roomId: number) => {
     try {
       await apiClient.unsubscribeRoom(roomId)
-      toast.success('已取消訂閱')
+      toast.success(t('subscribesView.unsubscribeSuccess'))
       await mutateSubscribedRoomIds()
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to unsubscribe room:', error)
       if (error.response?.status === 404) {
-        toast.error('未訂閱此房間')
+        toast.error(t('subscribesView.notSubscribed'))
       } else {
-        toast.error(error.response?.data || '取消訂閱失敗')
+        toast.error(error.response?.data || t('subscribesView.unsubscribeFailed'))
       }
     }
   }
@@ -218,11 +220,11 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
     try {
       await apiClient.startRecord({ roomId })
       await mutateDetails()
-      toast.success('已開始錄製')
+      toast.success(t('subscribesView.startSuccess'))
       onRefresh?.()
     } catch (error: any) {
       console.error('Failed to start record:', error)
-      toast.error(error.response?.data || '啟動錄製失敗')
+      toast.error(error.response?.data || t('subscribesView.startFailed'))
     }
   }
 
@@ -230,7 +232,7 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
     <div className="flex flex-col h-full">
       <div className="sticky top-0 bg-background z-10 p-4 border-b border-border">
         <div className="flex items-center gap-2">
-          <h2 className="text-xl font-bold shrink-0">訂閱管理</h2>
+          <h2 className="text-xl font-bold shrink-0">{t('subscribesView.title')}</h2>
 
           <div className="relative ml-auto w-full sm:w-[200px] md:w-[280px]">
             <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -239,9 +241,9 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
             <Input
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="搜尋關鍵字"
+              placeholder={t('subscribesView.searchPlaceholder')}
               className="pl-9 pr-16"
-              aria-label="搜尋訂閱直播間"
+              aria-label={t('subscribesView.searchAria')}
               aria-busy={searchInput.trim() !== searchQuery}
             />
             <div
@@ -252,18 +254,18 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
               <span className="animate-spin">
                 <SpinnerGapIcon size={14} />
               </span>
-              <span className="hidden sm:inline">搜尋中</span>
+              <span className="hidden sm:inline">{t('subscribesView.searching')}</span>
             </div>
           </div>
 
           {!isReadOnly && (
             <RoomIdInputWithConfirmDialog
-              triggerLabel="訂閱"
-              inputDialogTitle="訂閱直播間"
-              confirmDialogTitle="確認訂閱對象"
-              confirmDialogDescription="請確認這是你要訂閱的直播間。"
-              confirmLabel="確認訂閱"
-              confirmLoadingLabel="訂閱中..."
+              triggerLabel={t('subscribesView.subscribe')}
+              inputDialogTitle={t('subscribesView.subscribeTitle')}
+              confirmDialogTitle={t('subscribesView.confirmTargetTitle')}
+              confirmDialogDescription={t('subscribesView.confirmTargetDescription')}
+              confirmLabel={t('subscribesView.confirmSubscribe')}
+              confirmLoadingLabel={t('subscribesView.subscribing')}
               onConfirm={handleConfirmSubscribe}
             />
           )}
@@ -286,8 +288,8 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
                     <BellIcon size={40} />
                   </span>
                 }
-                title="還沒有訂閱任何房間"
-                description="點擊右上角的「訂閱」按鈕開始訂閱直播間"
+                title={t('subscribesView.emptyTitle')}
+                description={t('subscribesView.emptyDescription')}
               />
             ) : filteredRooms.length === 0 ? (
               <EmptyState
@@ -296,8 +298,8 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
                     <MagnifyingGlassIcon size={40} />
                   </span>
                 }
-                title="找不到符合條件的房間"
-                description="請嘗試其他關鍵字"
+                title={t('subscribesView.emptySearchTitle')}
+                description={t('subscribesView.emptySearchDescription')}
               />
             ) : (
               <div style={{ height: `${Math.max(0, rowVirtualizer.getTotalSize() - GRID_GAP)}px`, position: 'relative' }}>

@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { i18n } from '@/i18n'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -52,17 +53,17 @@ export interface LiveTimeMeta {
 function formatRelativeTimeLabel(date: Date): string {
   const diffSeconds = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000))
 
-  if (diffSeconds < 1) return '剛剛'
-  if (diffSeconds < 60) return `${diffSeconds}秒前`
+  if (diffSeconds < 1) return i18n.t('time.justNow')
+  if (diffSeconds < 60) return i18n.t('time.secondsAgo', { count: diffSeconds })
 
   const diffMinutes = Math.floor(diffSeconds / 60)
-  if (diffMinutes < 60) return `${diffMinutes}分鐘前`
+  if (diffMinutes < 60) return i18n.t('time.minutesAgo', { count: diffMinutes })
 
   const diffHours = Math.floor(diffMinutes / 60)
-  if (diffHours < 24) return `${diffHours}小時前`
+  if (diffHours < 24) return i18n.t('time.hoursAgo', { count: diffHours })
 
   const diffDays = Math.floor(diffHours / 24)
-  return `${diffDays}天前`
+  return i18n.t('time.daysAgo', { count: diffDays })
 }
 
 export function getLiveTimeMeta(liveTime?: string): LiveTimeMeta | null {
@@ -71,7 +72,7 @@ export function getLiveTimeMeta(liveTime?: string): LiveTimeMeta | null {
   const startedAt = new Date(liveTime)
   if (Number.isNaN(startedAt.getTime())) return null
 
-  const title = startedAt.toLocaleString('zh-TW', {
+  const title = startedAt.toLocaleString(i18n.resolvedLanguage === 'zh-CN' ? 'zh-CN' : 'zh-TW', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

@@ -6,6 +6,7 @@ import { Switch } from '@/components/ui/switch'
 import { apiClient } from '@/lib/api'
 import type { RoomConfig, RoomInfo } from '@/lib/types'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 interface RoomConfigDialogProps {
   roomInfo: RoomInfo
@@ -14,6 +15,7 @@ interface RoomConfigDialogProps {
 }
 
 export function RoomConfigDialog({ roomInfo, open, onOpenChange }: RoomConfigDialogProps) {
+  const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [roomConfig, setRoomConfig] = useState<RoomConfig | null>(null)
@@ -34,7 +36,7 @@ export function RoomConfigDialog({ roomInfo, open, onOpenChange }: RoomConfigDia
         }
       } catch (error: any) {
         console.error('Failed to load room config:', error)
-        toast.error(error.response?.data || '載入房間配置失敗', { position: 'bottom-center' })
+        toast.error(error.response?.data || t('roomConfig.loadFailed'), { position: 'bottom-center' })
         if (isMounted) {
           onOpenChange(false)
         }
@@ -50,7 +52,7 @@ export function RoomConfigDialog({ roomInfo, open, onOpenChange }: RoomConfigDia
     return () => {
       isMounted = false
     }
-  }, [open, onOpenChange, roomInfo.room_id])
+  }, [open, onOpenChange, roomInfo.room_id, t])
 
   const handleConfigToggle = (key: 'auto_record' | 'notify', checked: boolean) => {
     setRoomConfig((current) => {
@@ -82,10 +84,10 @@ export function RoomConfigDialog({ roomInfo, open, onOpenChange }: RoomConfigDia
       })
       setRoomConfig(updatedConfig)
       onOpenChange(false)
-      toast.success('房間配置已更新', { position: 'bottom-center' })
+      toast.success(t('roomConfig.updateSuccess'), { position: 'bottom-center' })
     } catch (error: any) {
       console.error('Failed to update room config:', error)
-      toast.error(error.response?.data || '更新房間配置失敗', { position: 'bottom-center' })
+      toast.error(error.response?.data || t('roomConfig.updateFailed'), { position: 'bottom-center' })
     } finally {
       setIsSaving(false)
     }
@@ -95,22 +97,22 @@ export function RoomConfigDialog({ roomInfo, open, onOpenChange }: RoomConfigDia
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>房間配置</DialogTitle>
+          <DialogTitle>{t('roomConfig.title')}</DialogTitle>
           <DialogDescription>
-            管理「{roomInfo.uname ?? `直播間 ${roomInfo.room_id}`}」的自動錄製與開播通知設定。
+            {t('roomConfig.description', { name: roomInfo.uname ?? t('subscribeCard.roomFallback', { roomId: roomInfo.room_id }) })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           {isLoading || !roomConfig ? (
-            <p className="text-sm text-muted-foreground">載入配置中...</p>
+            <p className="text-sm text-muted-foreground">{t('roomConfig.loading')}</p>
           ) : (
             <>
               <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/20 p-3">
                 <div className="space-y-1">
-                  <Label htmlFor={`auto-record-${roomInfo.room_id}`}>自動錄製</Label>
+                  <Label htmlFor={`auto-record-${roomInfo.room_id}`}>{t('roomConfig.autoRecord')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    開播後自動啓動錄製。
+                    {t('roomConfig.autoRecordHint')}
                   </p>
                 </div>
                 <Switch
@@ -123,9 +125,9 @@ export function RoomConfigDialog({ roomInfo, open, onOpenChange }: RoomConfigDia
 
               <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-muted/20 p-3">
                 <div className="space-y-1">
-                  <Label htmlFor={`notify-${roomInfo.room_id}`}>開播通知</Label>
+                  <Label htmlFor={`notify-${roomInfo.room_id}`}>{t('roomConfig.notify')}</Label>
                   <p className="text-sm text-muted-foreground">
-                    收到直播檢測或自動錄製啓動通知。
+                    {t('roomConfig.notifyHint')}
                   </p>
                 </div>
                 <Switch
@@ -145,13 +147,13 @@ export function RoomConfigDialog({ roomInfo, open, onOpenChange }: RoomConfigDia
             onClick={() => onOpenChange(false)}
             disabled={isLoading || isSaving}
           >
-            取消
+            {t('roomConfig.cancel')}
           </Button>
           <Button
             onClick={handleSaveConfig}
             disabled={isLoading || isSaving || !roomConfig}
           >
-            {isSaving ? '儲存中…' : '儲存配置'}
+            {isSaving ? t('roomConfig.saving') : t('roomConfig.save')}
           </Button>
         </DialogFooter>
       </DialogContent>

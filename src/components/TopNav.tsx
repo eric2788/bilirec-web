@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import { VideoCameraIcon, FileIcon } from '@phosphor-icons/react'
+import { useTranslation } from 'react-i18next'
 
 interface TopNavProps {
   activeTab: 'records' | 'files'
@@ -7,6 +8,8 @@ interface TopNavProps {
 }
 
 export function TopNav({ activeTab, onTabChange }: TopNavProps) {
+  const { t } = useTranslation()
+
   return (
     <nav className="hidden md:flex items-center gap-3">
       <button
@@ -18,7 +21,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
         )}
       >
         <span className="shrink-0"><VideoCameraIcon size={16} weight="bold" /></span>
-        <span>錄製管理</span>
+        <span>{t('nav.records')}</span>
       </button>
 
       <button
@@ -30,7 +33,7 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
         )}
       >
         <span className="shrink-0"><FileIcon size={16} weight="bold" /></span>
-        <span>錄製檔案</span>
+        <span>{t('nav.files')}</span>
       </button>
     </nav>
   )
