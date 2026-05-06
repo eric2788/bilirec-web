@@ -298,8 +298,8 @@ class ApiClient {
     const uniqueRoomIds = Array.from(new Set(roomIds.filter((id) => Number.isFinite(id))));
     const mergedRoomInfos: Record<string, RoomInfo> = {};
 
-    for (let i = 0; i < uniqueRoomIds.length; i += 100) {
-      const batchIds = uniqueRoomIds.slice(i, i + 100);
+    for (let i = 0; i < uniqueRoomIds.length; i += 50) {
+      const batchIds = uniqueRoomIds.slice(i, i + 50);
       const idsParam = batchIds.join(',');
       const response = await this.client.get<Record<string, RoomInfo>>(`/room/infos?roomIDs=${idsParam}`);
       Object.assign(mergedRoomInfos, response.data ?? {});
