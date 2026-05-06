@@ -271,7 +271,10 @@ export const resources = {
         serviceUnavailable: "服務暫時不可用",
         defaultStreamer: "主播",
         titleAutoRecord: "{{streamer}} 已開播並開始錄製",
+        titleAutoRecordFailed: "{{streamer}} 已開播但錄製啟動失敗",
+        titleLiveEnded: "{{streamer}} 直播已結束",
         titleLive: "{{streamer}} 已開播",
+        unknownEvent: "{{streamer}} 直播狀態更新",
         bodyDefault: "您有新的直播通知",
         actionOpenLive: "進入直播間"
       },
@@ -557,7 +560,10 @@ export const resources = {
         serviceUnavailable: "服务暂不可用",
         defaultStreamer: "主播",
         titleAutoRecord: "{{streamer}} 已开播并开始录制",
+        titleAutoRecordFailed: "{{streamer}} 已开播但录制启动失败",
+        titleLiveEnded: "{{streamer}} 直播已结束",
         titleLive: "{{streamer}} 已开播",
+        unknownEvent: "{{streamer}} 直播状态更新",
         bodyDefault: "你有新的直播通知",
         actionOpenLive: "进入直播间"
       },

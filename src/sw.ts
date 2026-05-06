@@ -348,10 +348,21 @@ async function buildLiveNotification(payload: PushPayload) {
   const streamer = payload.streamer_name || (await swT('sw.defaultStreamer'));
   const roomTitle = payload.room_title || "";
 
-  const isAutoRecord = eventType === "live_auto_record_started";
-  const title = isAutoRecord
-    ? await swT('sw.titleAutoRecord', { streamer })
-    : await swT('sw.titleLive', { streamer });
+  const titleKey = (() => {
+    switch (true) {
+      case eventType === "live_auto_record_started":
+        return "sw.titleAutoRecord";
+      case eventType === "live_auto_record_failed":
+        return "sw.titleAutoRecordFailed";
+      case eventType === "live_ended":
+        return "sw.titleLiveEnded";
+      case eventType === "live_detected":
+        return "sw.titleLive";
+      default:
+        return "sw.unknownEvent";
+    }
+  })();
+  const title = await swT(titleKey, { streamer });
 
   const bodyParts: string[] = [];
   if (roomTitle) {
