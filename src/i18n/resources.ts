@@ -129,7 +129,8 @@ export const resources = {
         startFailed: "啟動錄製失敗",
         startSuccess: "已開始錄製",
         stopSuccess: "已停止錄製",
-        stopFailed: "停止錄製失敗"
+        stopFailed: "停止錄製失敗",
+        durationHint: "可選擇本次錄製的時長限制，默認使用房間設定。"
       },
       recordCard: {
         roomFallback: "直播間 {{roomId}}",
@@ -416,7 +417,8 @@ export const resources = {
         startFailed: "启动录制失败",
         startSuccess: "已开始录制",
         stopSuccess: "已停止录制",
-        stopFailed: "停止录制失败"
+        stopFailed: "停止录制失败",
+        durationHint: "可选择本次录制的时长限制，默认使用房间设定。"
       },
       recordCard: {
         roomFallback: "直播间 {{roomId}}",

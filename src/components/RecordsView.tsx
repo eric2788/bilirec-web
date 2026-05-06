@@ -10,6 +10,8 @@ import { usePageVisibility } from '@/hooks/use-visibility'
 import { useRole } from '@/lib/role-context'
 import useSWR from 'swr'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 interface RecordsViewProps {
   onRefresh?: () => void
 }
@@ -20,6 +22,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const scrollPositionRef = useRef(0)
   const isVisible = usePageVisibility()
+  const [recordDuration, setRecordDuration] = useState(0)
 
   const {
     data: tasks = [],
@@ -65,7 +68,7 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
 
   const handleConfirmRecord = async (roomInfo: RoomInfo) => {
     try {
-      await apiClient.startRecord({ roomId: roomInfo.room_id })
+      await apiClient.startRecord({ roomId: roomInfo.room_id, durationMinutes: recordDuration || undefined })
     } catch (error: any) {
       console.error('Failed to start record:', error)
       toast.error(error.response?.data || t('recordsView.startFailed'))
@@ -101,6 +104,45 @@ export function RecordsView({ onRefresh }: RecordsViewProps) {
               confirmDialogDescription={t('recordsView.confirmTargetDescription')}
               confirmLabel={t('recordsView.confirmRecord')}
               confirmLoadingLabel={t('recordsView.adding')}
+              confirmExtraContent={
+                <div className="rounded-lg border border-border bg-muted/20 p-3 space-y-3">
+                  <div className="space-y-1">
+                    <Label>{t('roomConfig.recordDuration')}</Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('recordsView.durationHint')}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant={recordDuration === 0 ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1 sm:flex-none border"
+                      onClick={() => setRecordDuration(0)}
+                    >
+                      {t('roomConfig.recordDurationDefault')}
+                    </Button>
+                    <Button
+                      variant={recordDuration === -1 ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1 sm:flex-none border"
+                      onClick={() => setRecordDuration(-1)}
+                    >
+                      {t('roomConfig.recordDurationUnlimited')}
+                    </Button>
+                    {[60, 180, 300, 600].map((n) => (
+                      <Button
+                        key={n}
+                        variant={recordDuration === n ? 'default' : 'outline'}
+                        size="sm"
+                        className="flex-1 sm:flex-none border"
+                        onClick={() => setRecordDuration(n)}
+                      >
+                        {t('roomConfig.recordDurationHours', { n: n / 60 })}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              }
               onConfirm={handleConfirmRecord}
             />
           )}

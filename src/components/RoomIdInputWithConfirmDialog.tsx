@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -23,6 +23,7 @@ interface RoomIdInputWithConfirmDialogProps {
   confirmDialogDescription: string
   confirmLabel: string
   confirmLoadingLabel?: string
+  confirmExtraContent?: ReactNode
   onConfirm: (roomInfo: RoomInfo) => Promise<void>
 }
 
@@ -33,6 +34,7 @@ export function RoomIdInputWithConfirmDialog({
   confirmDialogDescription,
   confirmLabel,
   confirmLoadingLabel = '',
+  confirmExtraContent,
   onConfirm,
 }: RoomIdInputWithConfirmDialogProps) {
   const { t } = useTranslation()
@@ -166,6 +168,8 @@ export function RoomIdInputWithConfirmDialog({
               </div>
             </div>
           )}
+
+          {confirmExtraContent}
 
           <DialogFooter>
             <Button
