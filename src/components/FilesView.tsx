@@ -269,12 +269,16 @@ export function FilesView() {
   }, [handleFetchNextPage, hasNextPage, displayFiles.length, pageSize])
 
   const handleNavigate = (path: string) => {
+    setSearchInput('')
+    setSearch('')
     setCurrentPath(path)
   }
 
   const handleBack = () => {
     const parts = currentPath.split('/').filter(Boolean)
     parts.pop()
+    setSearchInput('')
+    setSearch('')
     setCurrentPath(parts.join('/'))
   }
 
