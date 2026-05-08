@@ -168,7 +168,7 @@ export const resources = {
       },
       subscribesView: {
         title: "訂閱管理",
-        searchPlaceholder: "搜尋直播間 ID、主播名稱或標題",
+        searchPlaceholder: "搜尋關鍵字",
         searchAria: "搜尋訂閱直播間",
         searching: "搜尋中",
         subscribe: "訂閱",
@@ -459,7 +459,7 @@ export const resources = {
       },
       subscribesView: {
         title: "订阅管理",
-        searchPlaceholder: "搜索直播间 ID、主播名称或标题",
+        searchPlaceholder: "搜索关键词",
         searchAria: "搜索订阅直播间",
         searching: "搜索中",
         subscribe: "订阅",
