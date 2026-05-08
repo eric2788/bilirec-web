@@ -82,7 +82,8 @@ body, .bg-card, .bg-popover, .card, .toast, .popover {
 }
 
 body {
-  font-family: 'Noto Sans TC', sans-serif;
+  font-family: 'Noto Sans SC', 'Source Han Sans SC', 'Microsoft YaHei',
+    'PingFang SC', 'Hiragino Sans GB', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
