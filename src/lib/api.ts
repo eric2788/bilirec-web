@@ -240,14 +240,16 @@ class ApiClient {
     return;
   }
 
-  async shareFile(path: string): Promise<ShareFileInfo> {
+  async shareFile(path: string, ttl: number = 3600): Promise<ShareFileInfo> {
     const encodedPath = path
       .split("/")
       .filter(Boolean)
       .map(encodeURIComponent)
       .join("/");
     const url = `/files/presigned/${encodedPath}`;
-    const response = await this.client.post<ShareFileInfo>(url);
+    const response = await this.client.post<ShareFileInfo>(url, undefined, {
+      params: { ttl }
+    });
     return response.data;
   }
 

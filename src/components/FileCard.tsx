@@ -129,6 +129,8 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
   const [deleteSourceAfterConvert, setDeleteSourceAfterConvert] = useState(false)
   const [convertFormat, setConvertFormat] = useState<string>('mp4')
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [shareTtl, setShareTtl] = useState<string>('3600')
 
   const openConvertDialog = () => {
     if (isDir) {
@@ -161,20 +163,36 @@ export function FileCard({ file, onNavigate, onDelete, currentPath = '' }: FileC
       setIsConverting(false)
     }
   }
-const handleShare = async () => {
+  const openShareDialog = () => {
     if (isRecording) {
       toast.error(t('fileCard.inRecordingShareBlocked'))
       return
     }
 
+    setShareTtl('3600')
+    setIsShareDialogOpen(true)
+  }
+
+  const handleShare = async () => {
+    setIsShareDialogOpen(false)
+    const selectedTtl = Number(shareTtl)
+
     setIsSharing(true)
     try {
       const fullPath = currentPath ? `${currentPath}/${name}` : name
-      const shareInfo = await apiClient.shareFile(fullPath)
+      const shareInfo = await apiClient.shareFile(fullPath, selectedTtl)
+      const expiresIn = Number(shareInfo.expires_in)
+      const durationLabel = expiresIn === 3600
+        ? t('fileCard.shareExpire1h')
+        : expiresIn === 21600
+          ? t('fileCard.shareExpire6h')
+          : expiresIn === 86400
+            ? t('fileCard.shareExpire24h')
+            : t('fileCard.shareExpireSeconds', { seconds: expiresIn })
       
       // Copy URL to clipboard
       await navigator.clipboard.writeText(shareInfo.url)
-      toast.success(t('fileCard.shareLinkCopied', { seconds: shareInfo.expires_in }))
+      toast.success(t('fileCard.shareLinkCopied', { duration: durationLabel }))
     } catch (error: any) {
       console.error('Share failed:', error)
       toast.error(t('fileCard.shareFailed') + (error.response?.data ? `: ${error.response.data}` : ''))
@@ -359,7 +377,7 @@ const handleShare = async () => {
                     variant="outline"
                     className={cn("p-2 rounded-md h-8 w-8 flex items-center justify-center", isSharing ? 'cursor-wait' : '')}
                     disabled={isSharing || isDeleting}
-                    onClick={handleShare}
+                    onClick={openShareDialog}
                     aria-label={t('fileCard.shareFileAria', { name })}
                     title={isSharing ? t('fileCard.shareGenerating') : t('fileCard.share')}
                   >
@@ -407,7 +425,7 @@ const handleShare = async () => {
                     )}
                     {/* Show share item only when not recording or downloading */}
                     {!isRecording && !isDownloading && (
-                      <DropdownMenuItem onSelect={() => { handleShare(); }} disabled={isSharing || isDeleting}>
+                      <DropdownMenuItem onSelect={() => { openShareDialog(); }} disabled={isSharing || isDeleting}>
                         {isSharing ? t('fileCard.shareGeneratingLong') : t('fileCard.share')}
                       </DropdownMenuItem>
                     )}
@@ -461,6 +479,54 @@ const handleShare = async () => {
                 <DialogFooter>
                   <Button variant="ghost" onClick={() => setIsConvertDialogOpen(false)}>{t('fileCard.cancel')}</Button>
                   <Button onClick={confirmConvert} disabled={isConverting}>{isConverting ? t('fileCard.convertRunning', { format: convertFormat.toUpperCase() }) : t('fileCard.confirmConvert', { format: convertFormat.toUpperCase() })}</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Share confirmation dialog */}
+            <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('fileCard.shareConfirmTitle')}</DialogTitle>
+                  <DialogDescription>{t('fileCard.shareConfirmDescription', { name })}</DialogDescription>
+                </DialogHeader>
+
+                <div className="mt-3">
+                  <span className="text-sm">{t('fileCard.shareExpireLabel')}</span>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <Button
+                      variant={shareTtl === '3600' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1 sm:flex-none border"
+                      onClick={() => setShareTtl('3600')}
+                      disabled={isSharing}
+                    >
+                      {t('fileCard.shareExpire1h')}
+                    </Button>
+                    <Button
+                      variant={shareTtl === '21600' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1 sm:flex-none border"
+                      onClick={() => setShareTtl('21600')}
+                      disabled={isSharing}
+                    >
+                      {t('fileCard.shareExpire6h')}
+                    </Button>
+                    <Button
+                      variant={shareTtl === '86400' ? 'default' : 'outline'}
+                      size="sm"
+                      className="flex-1 sm:flex-none border"
+                      onClick={() => setShareTtl('86400')}
+                      disabled={isSharing}
+                    >
+                      {t('fileCard.shareExpire24h')}
+                    </Button>
+                  </div>
+                </div>
+
+                <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsShareDialogOpen(false)}>{t('fileCard.cancel')}</Button>
+                  <Button onClick={handleShare} disabled={isSharing}>{isSharing ? t('fileCard.shareGenerating') : t('fileCard.confirmShare')}</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
