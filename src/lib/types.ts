@@ -54,10 +54,11 @@ export interface RecorderStats {
   output_path: string
 }
 
+export type RecordStatus = 'recording' | 'recovering' | 'idle'
 // Response from /record/{room}/info
 export interface RecordInfo {
   room_id: number
-  status: 'recording' | 'recovering' | 'idle'
+  status: RecordStatus
 }
 
 export interface RecordFile {

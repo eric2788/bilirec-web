@@ -7,7 +7,7 @@ import { EmptyState } from './EmptyState'
 import { RoomIdInputWithConfirmDialog } from './RoomIdInputWithConfirmDialog'
 import { apiClient } from '@/lib/api'
 import { toast } from 'sonner'
-import type { RecordInfo, RoomInfo } from '@/lib/types'
+import type { RecordInfo, RecordStatus, RoomInfo } from '@/lib/types'
 import { LoadingScreen } from './LoadingScreen'
 import { usePageVisibility } from '@/hooks/use-visibility'
 import { useScoredSearch } from '@/hooks/use-scored-search'
@@ -61,14 +61,15 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
   } = useSWR<{ roomInfos: Record<string, RoomInfo>; recordStatuses: RecordInfo[] }>(
     roomInfoKey,
     async () => {
-      const [roomInfos, recordStatuses] = await Promise.all([
+      const [roomInfos, recordStatusesMap] = await Promise.all([
         apiClient.getRoomInfos(subscribedRoomIds),
-        Promise.all(
-          subscribedRoomIds.map((id) =>
-            apiClient.getRecordStatus(id).catch(() => ({ room_id: id, status: 'idle' as const }))
-          )
-        )
+        apiClient.getRecordStatuses(subscribedRoomIds).catch((): Record<string, RecordStatus> => ({}))
       ])
+
+      const recordStatuses = subscribedRoomIds.map((id) => ({
+        room_id: id,
+        status: recordStatusesMap[id.toString()] ?? 'idle',
+      }))
 
       return { roomInfos, recordStatuses }
     },

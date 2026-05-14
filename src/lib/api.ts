@@ -17,7 +17,9 @@ import type {
   WebPushPublicKeyResponse,
   WebPushSubscriptionRequest,
   WebPushUnsubscribeRequest,
-  RecordFileListResponse
+  RecordFileListResponse,
+  RecordStatus,
+  RecorderStats
 } from "./types";
 import { sharedStore } from "./shared-store";
 
@@ -87,32 +89,36 @@ class ApiClient {
     return Array.isArray(response.data) ? response.data : [];
   }
 
+  async getRecordStats(roomIds: number[]): Promise<Record<string, RecorderStats>> {
+    const uniqueRoomIds = Array.from(new Set(roomIds.filter((id) => Number.isFinite(id))));
+    if (uniqueRoomIds.length === 0) {
+      return {};
+    }
+    const response = await this.client.post<Record<string, RecorderStats>>(`/record/stats`, { room_ids: uniqueRoomIds });
+    return response.data ?? {};
+  }
+
   async getRecordTasks(): Promise<RecordTask[]> {
     const ids = await this.getRecords();
 
-    // For each room ID, fetch status and stats.
-    const tasks = await Promise.all(
-      ids.map(async (id) => {
-        // per API, use /record/{id}/status to get status
-        const infoRes = await this.client.get<RecordInfo | any>(
-          `/record/${id}/status`
-        );
-        const info = infoRes.data as RecordInfo;
-        let status: "recording" | "recovering" | "idle" = info.status;
+    // Fetch all statuses and stats in parallel
+    const [statuses, stats] = await Promise.all([
+      this.getRecordStatuses(ids),
+      this.getRecordStats(ids)
+    ]);
 
-        // stats - allow this to throw on error
-        const r = await this.client.get<any>(`/record/${id}/stats`);
-        const stats = r.data;
-
-        return {
-          roomId: id,
-          status,
-          fileSize: stats?.bytes_written,
-          recordedTime: stats?.elapsed_seconds,
-          startTime: stats?.start_time
-        } as RecordTask;
-      })
-    );
+    // Combine statuses and stats into RecordTask objects
+    const tasks = ids.map((id) => {
+      const status = statuses[id.toString()] ?? "idle";
+      const roomStats = stats[id.toString()];
+      return {
+        roomId: id,
+        status,
+        fileSize: roomStats?.bytes_written,
+        recordedTime: roomStats?.elapsed_seconds,
+        startTime: roomStats?.start_time
+      } as RecordTask;
+    });
 
     return tasks;
   }
@@ -296,28 +302,23 @@ class ApiClient {
     if (!Array.isArray(roomIds) || roomIds.length === 0) {
       return {};
     }
-
     const uniqueRoomIds = Array.from(new Set(roomIds.filter((id) => Number.isFinite(id))));
-    const mergedRoomInfos: Record<string, RoomInfo> = {};
-
-    for (let i = 0; i < uniqueRoomIds.length; i += 50) {
-      const batchIds = uniqueRoomIds.slice(i, i + 50);
-      const idsParam = batchIds.join(',');
-      const response = await this.client.get<Record<string, RoomInfo>>(`/room/infos?roomIDs=${idsParam}`);
-      Object.assign(mergedRoomInfos, response.data ?? {});
-    }
-
-    return mergedRoomInfos;
-  }
-
-  async checkLiveStatus(roomId: number): Promise<LiveStatus> {
-    const response = await this.client.get<LiveStatus>(`/room/${roomId}/live`);
-    return response.data;
+    const response = await this.client.post<Record<string, RoomInfo>>(`/room/infos`, { room_ids: uniqueRoomIds });
+    return response.data ?? {};
   }
 
   async getRecordStatus(roomId: number): Promise<RecordInfo> {
     const response = await this.client.get<RecordInfo>(`/record/${roomId}/status`);
     return response.data;
+  }
+
+  async getRecordStatuses(roomIds: number[]): Promise<Record<string, RecordStatus>> {
+    if (!Array.isArray(roomIds) || roomIds.length === 0) {
+      return {};
+    }
+    const uniqueRoomIds = Array.from(new Set(roomIds.filter((id) => Number.isFinite(id))));
+    const response = await this.client.post<Record<string, RecordStatus>>(`/record/statuses`, { room_ids: uniqueRoomIds });
+    return response.data ?? {};
   }
 
   // Room subscription methods
