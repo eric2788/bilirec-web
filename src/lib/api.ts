@@ -94,8 +94,16 @@ class ApiClient {
     if (uniqueRoomIds.length === 0) {
       return {};
     }
-    const response = await this.client.post<Record<string, RecorderStats>>(`/record/stats`, { room_ids: uniqueRoomIds });
-    return response.data ?? {};
+    const response = await this.client.post<Record<string, RecorderStats> | { stats: Record<string, RecorderStats> }>(`/record/stats`, { room_ids: uniqueRoomIds });
+    if (this.isRecordStatsWithField(response.data)) {
+      return response.data.stats ?? {};
+    } else {
+      return response.data ?? {};
+    }
+  }
+
+  isRecordStatsWithField(data: Record<string, RecorderStats> | { stats: Record<string, RecorderStats> }): data is { stats: Record<string, RecorderStats> } {
+    return "stats" in data;
   }
 
   async getRecordTasks(): Promise<RecordTask[]> {
@@ -317,8 +325,16 @@ class ApiClient {
       return {};
     }
     const uniqueRoomIds = Array.from(new Set(roomIds.filter((id) => Number.isFinite(id))));
-    const response = await this.client.post<Record<string, RecordStatus>>(`/record/statuses`, { room_ids: uniqueRoomIds });
-    return response.data ?? {};
+    const response = await this.client.post<Record<string, RecordStatus> | { statuses: Record<string, RecordStatus> }>(`/record/statuses`, { room_ids: uniqueRoomIds });
+    if (this.isRecordStatusWithField(response.data)) {
+      return response.data.statuses ?? {};
+    } else {
+      return response.data ?? {};
+    }
+  }
+
+  isRecordStatusWithField(data: Record<string, RecordStatus> | { statuses: Record<string, RecordStatus> }): data is { statuses: Record<string, RecordStatus> } {
+    return "statuses" in data;
   }
 
   // Room subscription methods
