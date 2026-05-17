@@ -55,6 +55,19 @@ export const resources = {
         errorConnect: "連線失敗，請檢查伺服器地址",
         errorLoginGeneral: "登入失敗，請檢查伺服器地址和憑證"
       },
+      bilibiliAuth: {
+        title: "Bilibili 登入",
+        description: "在此視窗完成 Bilibili 掃碼登入。",
+        notLoggedIn: "未登入Bilibili",
+        loggedIn: "已登入Bilibili",
+        login: "登入",
+        switchAccount: "切換帳號",
+        generatingQr: "正在產生登入二維碼...",
+        loginSuccess: "bilibili 登入成功",
+        openScanLink: "使用B站客戶端登入",
+        qrLink: "掃碼連結",
+        startFailed: "初始化 Bilibili 登入失敗"
+      },
       filesView: {
         title: "錄製檔案",
         searchPlaceholder: "搜尋檔名...",
@@ -354,6 +367,19 @@ export const resources = {
         errorConnect: "连接失败，请检查服务器地址",
         errorLoginGeneral: "登录失败，请检查服务器地址和凭据"
       },
+      bilibiliAuth: {
+        title: "Bilibili 登录",
+        description: "在此窗口完成 Bilibili 扫码登录。",
+        notLoggedIn: "未登录Bilibili",
+        loggedIn: "已登录Bilibili",
+        login: "登录",
+        switchAccount: "切换账号",
+        generatingQr: "正在生成登录二维码...",
+        loginSuccess: "bilibili 登录成功",
+        openScanLink: "使用B站客户端登录",
+        qrLink: "扫码链接",
+        startFailed: "初始化 Bilibili 登录失败"
+      },
       filesView: {
         title: "录制文件",
         searchPlaceholder: "搜索文件名...",
@@ -533,12 +559,14 @@ export const resources = {
         autoRecord: "自动录制",
         autoRecordHint: "开播后自动启动录制。",
         notify: "开播通知",
-        notifyHint: "收到直播检测或自动录制启动通知。",        recordDuration: "录制时长",
+        notifyHint: "收到直播检测或自动录制启动通知。",        
+        recordDuration: "录制时长",
         recordDurationHint: "从订阅管理启动录制时使用的时长。",
         recordDurationDefault: "默认",
         recordDurationUnlimited: "不限",
         recordDurationMinutes: "{{n}} 分钟",
-        recordDurationHours: "{{n}} 小时",        cancel: "取消",
+        recordDurationHours: "{{n}} 小时",        
+        cancel: "取消",
         saving: "保存中…",
         save: "保存配置"
       },

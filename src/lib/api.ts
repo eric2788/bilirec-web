@@ -19,7 +19,9 @@ import type {
   WebPushUnsubscribeRequest,
   RecordFileListResponse,
   RecordStatus,
-  RecorderStats
+  RecorderStats,
+  BilibiliAuthStatus,
+  BilibiliAuthInitResponse
 } from "./types";
 import { sharedStore } from "./shared-store";
 
@@ -382,6 +384,16 @@ class ApiClient {
 
   async removeWebPushSubscription(data: WebPushUnsubscribeRequest): Promise<void> {
     await this.client.delete('/notify/subscribe', { data });
+  }
+
+  async getBilibiliAuthStatus(): Promise<BilibiliAuthStatus> {
+    const response = await this.client.get<BilibiliAuthStatus>('/auth/bilibili/status');
+    return response.data;
+  }
+
+  async initBilibiliAuth(): Promise<BilibiliAuthInitResponse> {
+    const response = await this.client.post<BilibiliAuthInitResponse>('/auth/bilibili/init');
+    return response.data;
   }
 
 }

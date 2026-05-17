@@ -150,3 +150,27 @@ export interface WebPushSubscriptionRequest {
 export interface WebPushUnsubscribeRequest {
   endpoint: string
 }
+
+export interface BilibiliAuthAccount {
+  mid: number
+  uname: string
+}
+
+export interface BilibiliAuthQr {
+  url: string
+}
+
+export type AuthState = 'idle' | 'preloaded' | 'awaiting_qr' | 'authenticating' | 'authenticated' | 'failed' | 'qr_expired'
+
+export interface BilibiliAuthInitResponse {
+  qr?: BilibiliAuthQr
+  error?: string
+}
+
+export interface BilibiliAuthStatus {
+  authenticated: boolean
+  state: AuthState
+  account?: BilibiliAuthAccount
+  qr?: BilibiliAuthQr
+  lastError?: string
+}

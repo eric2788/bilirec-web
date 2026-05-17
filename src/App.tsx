@@ -6,6 +6,7 @@ import { RecordsView } from "@/components/RecordsView";
 import { FilesView } from "@/components/FilesView";
 import { ConvertsView } from "@/components/ConvertsView";
 import { SubscribesView } from "@/components/SubscribesView";
+import { BilibiliAuthDialog } from "@/components/BilibiliAuthDialog";
 import { BottomNav } from "@/components/BottomNav";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { DiskUsageDisplay } from "@/components/DiskUsageDisplay";
@@ -26,7 +27,10 @@ import {
   MoonIcon,
   TranslateIcon,
   GearIcon,
-  CheckIcon
+  CheckIcon,
+  UserIcon,
+  Circle,
+  CheckCircle
 } from "@phosphor-icons/react";
 import { apiClient } from "@/lib/api";
 import {
@@ -38,6 +42,7 @@ import { storage } from "@/lib/storage";
 import { toast, Toaster } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import type { DiskUsage, LoginResponse } from "@/lib/types";
+import type { BilibiliAuthStatus } from "@/lib/types";
 import { RoleContext } from "@/lib/role-context";
 
 type AppTab = "records" | "files" | "converts" | "subscribe";
@@ -78,10 +83,15 @@ function App() {
   const [userName, setUserName] = useState<string>(
     () => localStorage.getItem("user-name") ?? ""
   );
+  const [bilibiliButtonVisible, setBilibiliButtonVisible] = useState(true);
+  const [bilibiliAuthStatus, setBilibiliAuthStatus] = useState<BilibiliAuthStatus | null>(null);
+  const [isBilibiliDialogOpen, setIsBilibiliDialogOpen] = useState(false);
 
   const isReadOnly = userRole === "viewer";
 
   const activeTheme = resolvedTheme || theme || "light";
+
+  const isUnsupportedStatus = (statusCode: number | undefined) => statusCode === 400 || statusCode === 404
 
   const handleThemeToggle = () => {
     setTheme(activeTheme === "dark" ? "light" : "dark");
@@ -294,6 +304,58 @@ function App() {
 
   useEffect(() => {
     if (!isAuthenticated) {
+      setBilibiliAuthStatus(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadBilibiliStatus = async () => {
+      try {
+        const status = await apiClient.getBilibiliAuthStatus();
+        if (cancelled) {
+          return;
+        }
+        setBilibiliButtonVisible(true);
+        setBilibiliAuthStatus(status);
+      } catch (error: any) {
+        if (cancelled) {
+          return;
+        }
+        if (isUnsupportedStatus(error?.response?.status)) {
+          setBilibiliButtonVisible(false);
+          setBilibiliAuthStatus(null);
+          return;
+        }
+        setBilibiliButtonVisible(true);
+      }
+    };
+
+    void loadBilibiliStatus();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
+  const refreshBilibiliStatus = async () => {
+    try {
+      const status = await apiClient.getBilibiliAuthStatus();
+      setBilibiliButtonVisible(true);
+      setBilibiliAuthStatus(status);
+      return status;
+    } catch (error: any) {
+      if (isUnsupportedStatus(error?.response?.status)) {
+        setBilibiliButtonVisible(false);
+        setBilibiliAuthStatus(null);
+        return null;
+      }
+      return bilibiliAuthStatus;
+    }
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
       return;
     }
 
@@ -462,6 +524,56 @@ function App() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
+                {bilibiliButtonVisible && (
+                  <DropdownMenu onOpenChange={(open) => {
+                    if (open) {
+                      void refreshBilibiliStatus();
+                    }
+                  }}>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="shrink-0 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
+                        aria-label={t("bilibiliAuth.title")}
+                      >
+                        <UserIcon size={18} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-52">
+                      <div className="px-3 py-3 flex flex-col gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                            bilibiliAuthStatus?.authenticated ? 'bg-green-500' : 'bg-muted-foreground/40'
+                          }`}>
+                            {bilibiliAuthStatus?.authenticated
+                              ? (bilibiliAuthStatus.account?.uname?.[0]?.toUpperCase() ?? 'B')
+                              : 'B'}
+                          </div>
+                          <div className="flex flex-col min-w-0">
+                            <span className="text-xs text-muted-foreground">
+                              {bilibiliAuthStatus?.authenticated ? t("bilibiliAuth.loggedIn") : t("bilibiliAuth.notLoggedIn")}
+                            </span>
+                            <span className="text-sm font-medium text-foreground break-all">
+                              {bilibiliAuthStatus?.authenticated
+                                ? (bilibiliAuthStatus.account?.uname || '-')
+                                : '-'}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setIsBilibiliDialogOpen(true)}
+                          size="sm"
+                          variant={bilibiliAuthStatus?.authenticated ? 'outline' : 'default'}
+                          className="cursor-pointer w-full"
+                        >
+                          {bilibiliAuthStatus?.authenticated ? t("bilibiliAuth.switchAccount") : t("bilibiliAuth.login")}
+                        </Button>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+
                 <Button
                   variant="ghost"
                   size="sm"
@@ -482,7 +594,11 @@ function App() {
               </div>
 
               <div className="flex sm:hidden items-center gap-2">
-                <DropdownMenu>
+                <DropdownMenu onOpenChange={(open) => {
+                  if (open && bilibiliButtonVisible) {
+                    void refreshBilibiliStatus();
+                  }
+                }}>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
@@ -493,7 +609,41 @@ function App() {
                       <GearIcon size={18} />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-52">
+                    {bilibiliButtonVisible && (
+                      <>
+                        <div className="px-3 py-3 flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${
+                              bilibiliAuthStatus?.authenticated ? 'bg-green-500' : 'bg-muted-foreground/40'
+                            }`}>
+                              {bilibiliAuthStatus?.authenticated
+                                ? (bilibiliAuthStatus.account?.uname?.[0]?.toUpperCase() ?? 'B')
+                                : 'B'}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-xs text-muted-foreground">
+                                {bilibiliAuthStatus?.authenticated ? t("bilibiliAuth.loggedIn") : t("bilibiliAuth.notLoggedIn")}
+                              </span>
+                              <span className="text-sm font-medium text-foreground break-all">
+                                {bilibiliAuthStatus?.authenticated
+                                  ? (bilibiliAuthStatus.account?.uname || '-')
+                                  : '-'}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => setIsBilibiliDialogOpen(true)}
+                            size="sm"
+                            variant={bilibiliAuthStatus?.authenticated ? 'outline' : 'default'}
+                            className="cursor-pointer w-full"
+                          >
+                            {bilibiliAuthStatus?.authenticated ? t("bilibiliAuth.switchAccount") : t("bilibiliAuth.login")}
+                          </Button>
+                        </div>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuLabel>{t("actions.settings")}</DropdownMenuLabel>
                     <DropdownMenuItem onClick={handleThemeToggle}>
                       {activeTheme === "dark" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
@@ -533,6 +683,16 @@ function App() {
             </div>
           </div>
         </div>
+
+        {bilibiliButtonVisible && (
+          <BilibiliAuthDialog
+            open={isBilibiliDialogOpen}
+            onOpenChange={setIsBilibiliDialogOpen}
+            initialStatus={bilibiliAuthStatus}
+            onStatusChange={setBilibiliAuthStatus}
+            onControllerUnsupported={() => setBilibiliButtonVisible(false)}
+          />
+        )}
 
         <div className="h-[calc(100vh-73px)] overflow-x-hidden flex">
           <LeftSidebar
