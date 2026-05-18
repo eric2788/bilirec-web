@@ -83,7 +83,7 @@ function App() {
   const [userName, setUserName] = useState<string>(
     () => localStorage.getItem("user-name") ?? ""
   );
-  const [bilibiliButtonVisible, setBilibiliButtonVisible] = useState(true);
+  const [bilibiliButtonVisible, setBilibiliButtonVisible] = useState(false);
   const [bilibiliAuthStatus, setBilibiliAuthStatus] = useState<BilibiliAuthStatus | null>(null);
   const [isBilibiliDialogOpen, setIsBilibiliDialogOpen] = useState(false);
 
@@ -323,10 +323,12 @@ function App() {
           return;
         }
         if (isUnsupportedStatus(error?.response?.status)) {
+          console.debug("Bilibili auth endpoint is unsupported, hiding related UI");
           setBilibiliButtonVisible(false);
           setBilibiliAuthStatus(null);
           return;
         }
+        console.debug("Bilibili auth endpoint is supported, showing related UI");
         setBilibiliButtonVisible(true);
       }
     };
