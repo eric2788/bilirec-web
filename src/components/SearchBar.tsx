@@ -36,15 +36,15 @@ export function SearchBar({
   ariaLabel,
 }: SearchBarProps) {
   const [open, setOpen] = useState(false)
-  const [mobileInput, setMobileInput] = useState('')
+  const [dialogInput, setDialogInput] = useState('')
 
   const handleOpenChange = (next: boolean) => {
-    if (next) setMobileInput(value)
+    if (next) setDialogInput(value)
     setOpen(next)
   }
 
   const handleMobileSearch = () => {
-    onChange(mobileInput)
+    onChange(dialogInput)
     setOpen(false)
   }
 
@@ -87,7 +87,10 @@ export function SearchBar({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="pl-9 pr-20"
+          clearable={!isSearching}
+          onClear={() => onChange('')}
+          clearAriaLabel="Clear search"
+          className="pl-9 pr-24"
           aria-label={ariaLabel}
           aria-busy={isSearching}
         />
@@ -106,11 +109,14 @@ export function SearchBar({
             </span>
             <Input
               autoFocus
-              value={mobileInput}
-              onChange={(e) => setMobileInput(e.target.value)}
+              value={dialogInput}
+              onChange={(e) => setDialogInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleMobileSearch()}
               placeholder={placeholder}
-              className="pl-9 pr-4"
+              clearable={!isSearching}
+              onClear={() => setDialogInput('')}
+              clearAriaLabel="Clear search"
+              className="pl-9"
               aria-busy={isSearching}
             />
           </div>

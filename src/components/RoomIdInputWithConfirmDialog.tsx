@@ -120,6 +120,9 @@ export function RoomIdInputWithConfirmDialog({
               value={roomId}
               onChange={(e) => setRoomId(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handlePrepare()}
+              clearable
+              onClear={() => setRoomId('')}
+              clearAriaLabel={t('roomInput.cancel')}
             />
             <Button onClick={handlePrepare} className='w-full' disabled={isFetchingRoomInfo}>
               {isFetchingRoomInfo ? t('roomInput.fetching') : t('roomInput.next')}
