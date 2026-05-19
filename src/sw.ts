@@ -356,6 +356,8 @@ async function buildLiveNotification(payload: PushPayload) {
         return "sw.titleAutoRecordFailed";
       case eventType === "live_ended":
         return "sw.titleLiveEnded";
+      case eventType === "live_record_stopped":
+        return "sw.titleRecordStopped";
       case eventType === "live_detected":
         return "sw.titleLive";
       default:
