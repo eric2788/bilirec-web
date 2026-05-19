@@ -25,12 +25,12 @@ import {
   SignOutIcon,
   SunIcon,
   MoonIcon,
+  MonitorIcon,
   TranslateIcon,
   GearIcon,
   CheckIcon,
   UserIcon,
-  Circle,
-  CheckCircle
+  CircleHalfTiltIcon
 } from "@phosphor-icons/react";
 import { apiClient } from "@/lib/api";
 import {
@@ -93,8 +93,8 @@ function App() {
 
   const isUnsupportedStatus = (statusCode: number | undefined) => statusCode === 400 || statusCode === 404
 
-  const handleThemeToggle = () => {
-    setTheme(activeTheme === "dark" ? "light" : "dark");
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
   };
 
   const handleLanguageChange = async (nextLanguage: AppLanguage) => {
@@ -576,23 +576,38 @@ function App() {
                   </DropdownMenu>
                 )}
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
-                  aria-label={t("actions.switchTheme")}
-                  onClick={handleThemeToggle}
-                >
-                  {mounted ? (
-                    activeTheme === "dark" ? (
-                      <SunIcon size={18} />
-                    ) : (
-                      <MoonIcon size={18} />
-                    )
-                  ) : (
-                    <SunIcon size={18} />
-                  )}
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
+                      aria-label={t("actions.switchTheme")}
+                    >
+                      <CircleHalfTiltIcon size={18} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-44">
+                    <DropdownMenuLabel>{t("actions.theme")}</DropdownMenuLabel>
+                    {(["light", "dark", "system"] as const).map((t_val) => (
+                      <DropdownMenuItem
+                        key={t_val}
+                        onSelect={() => handleThemeChange(t_val)}
+                        className={`gap-2 cursor-pointer ${
+                          theme === t_val
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <span className="w-4 shrink-0">
+                          {theme === t_val && <CheckIcon size={14} weight="bold" />}
+                        </span>
+                        {t_val === "light" ? <SunIcon size={14} /> : t_val === "dark" ? <MoonIcon size={14} /> : <MonitorIcon size={14} />}
+                        {t_val === "light" ? t("actions.themeLight") : t_val === "dark" ? t("actions.themeDark") : t("actions.themeSystem")}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
 
               <div className="flex sm:hidden items-center gap-2">
@@ -646,11 +661,24 @@ function App() {
                         <DropdownMenuSeparator />
                       </>
                     )}
-                    <DropdownMenuLabel>{t("actions.settings")}</DropdownMenuLabel>
-                    <DropdownMenuItem onClick={handleThemeToggle}>
-                      {activeTheme === "dark" ? <SunIcon size={16} /> : <MoonIcon size={16} />}
-                      {t("actions.theme")}: {activeTheme === "dark" ? t("actions.themeLight") : t("actions.themeDark")}
-                    </DropdownMenuItem>
+                    <DropdownMenuLabel>{t("actions.theme")}</DropdownMenuLabel>
+                    {(["light", "dark", "system"] as const).map((t_val) => (
+                      <DropdownMenuItem
+                        key={t_val}
+                        onSelect={() => handleThemeChange(t_val)}
+                        className={`gap-2 cursor-pointer ${
+                          theme === t_val
+                            ? "bg-primary/10 text-primary font-medium"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        <span className="w-4 shrink-0">
+                          {theme === t_val && <CheckIcon size={14} weight="bold" />}
+                        </span>
+                        {t_val === "light" ? <SunIcon size={14} /> : t_val === "dark" ? <MoonIcon size={14} /> : <MonitorIcon size={14} />}
+                        {t_val === "light" ? t("actions.themeLight") : t_val === "dark" ? t("actions.themeDark") : t("actions.themeSystem")}
+                      </DropdownMenuItem>
+                    ))}
                     <DropdownMenuSeparator />
                     <DropdownMenuLabel>{t("actions.language")}</DropdownMenuLabel>
                     {(["zh-TW", "zh-CN"] as AppLanguage[]).map((lang) => (

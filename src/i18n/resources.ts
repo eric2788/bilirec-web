@@ -11,6 +11,7 @@ export const resources = {
         theme: "主題",
         themeLight: "淺色",
         themeDark: "深色",
+        themeSystem: "跟隨系統",
         switchTheme: "切換主題",
         search: "搜尋"
       },
@@ -320,6 +321,7 @@ export const resources = {
         theme: "主题",
         themeLight: "浅色",
         themeDark: "深色",
+        themeSystem: "跟随系统",
         switchTheme: "切换主题",
         search: "搜索",
         logoutSuccess: "已登出",
