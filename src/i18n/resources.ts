@@ -299,7 +299,8 @@ export const resources = {
         titleLive: "{{streamer}} 已開播",
         unknownEvent: "{{streamer}} 直播狀態更新",
         bodyDefault: "您有新的直播通知",
-        actionOpenLive: "進入直播間"
+        actionOpenLive: "進入直播間",
+        atTime: "時間: {{time}}"
       },
       time: {
         justNow: "剛剛",
@@ -613,7 +614,8 @@ export const resources = {
         titleLive: "{{streamer}} 已开播",
         unknownEvent: "{{streamer}} 直播状态更新",
         bodyDefault: "你有新的直播通知",
-        actionOpenLive: "进入直播间"
+        actionOpenLive: "进入直播间",
+        atTime: "时间: {{time}}"
       },
       time: {
         justNow: "刚刚",

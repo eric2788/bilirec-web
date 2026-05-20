@@ -367,9 +367,14 @@ async function buildLiveNotification(payload: PushPayload) {
   const title = await swT(titleKey, { streamer });
 
   const bodyParts: string[] = [];
-  if (roomTitle) {
+  if (!["live_ended", "live_record_stopped"].includes(eventType) && roomTitle) {
     bodyParts.push(truncateNotificationText(singleLine(roomTitle), 60));
+  } else if (payload.timestamp) {
+    const date = new Date(payload.timestamp * 1000);
+    const timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    bodyParts.push(await swT('sw.atTime', { time: timeStr }));
   }
+
   const body = bodyParts.join("\n") || (await swT('sw.bodyDefault'));
 
   return {
