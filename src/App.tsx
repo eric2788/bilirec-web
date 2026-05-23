@@ -91,7 +91,7 @@ function App() {
 
   const activeTheme = resolvedTheme || theme || "light";
 
-  const isUnsupportedStatus = (statusCode: number | undefined) => statusCode === 400 || statusCode === 404
+  const isUnsupportedStatus = (statusCode: number | undefined) => statusCode === 400 || statusCode === 404 || statusCode === 403
 
   const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
     setTheme(newTheme);

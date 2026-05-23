@@ -64,7 +64,7 @@ export function BilibiliAuthDialog({
     ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(qrUrl)}`
     : ''
   const statusMessage = status?.state === 'qr_expired' ? '二维码已失效，请关闭窗口并重新点击登录' : status?.lastError
-  const isUnsupportedStatus = (statusCode: number | undefined) => statusCode === 400 || statusCode === 404
+  const isUnsupportedStatus = (statusCode: number | undefined) => statusCode === 400 || statusCode === 404 || statusCode === 403
   const startAuth = async () => {
     setIsStarting(true)
     try {
