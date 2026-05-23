@@ -14,31 +14,23 @@ import { useTranslation } from 'react-i18next'
 
 type FilesLayoutConfig = {
   pageSize: number
-  initialSkeletonCount: number
-  pagingSkeletonCount: number
 }
 
 const getFilesLayoutConfig = (width: number): FilesLayoutConfig => {
   if (width < 768) {
     return {
       pageSize: 14,
-      initialSkeletonCount: 12,
-      pagingSkeletonCount: 6
     }
   }
 
   if (width < 1280) {
     return {
       pageSize: 36,
-      initialSkeletonCount: 32,
-      pagingSkeletonCount: 8
     }
   }
 
   return {
     pageSize: 63,
-    initialSkeletonCount: 56,
-    pagingSkeletonCount: 14
   }
 }
 
@@ -107,9 +99,7 @@ export function FilesView() {
     const onResize = () => {
       const next = getFilesLayoutConfig(window.innerWidth)
       setLayoutConfig((prev) => (
-        prev.pageSize === next.pageSize &&
-        prev.initialSkeletonCount === next.initialSkeletonCount &&
-        prev.pagingSkeletonCount === next.pagingSkeletonCount
+        prev.pageSize === next.pageSize
       )
         ? prev
         : next)
@@ -119,7 +109,7 @@ export function FilesView() {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  const { pageSize, initialSkeletonCount, pagingSkeletonCount } = layoutConfig
+  const { pageSize } = layoutConfig
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

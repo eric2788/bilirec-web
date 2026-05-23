@@ -8,7 +8,6 @@ import type {
   ShareFileInfo,
   RoomInfo,
   RoomConfig,
-  LiveStatus,
   SubscriptionStatus,
   SubscribedRooms,
   DiskUsage,

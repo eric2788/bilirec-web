@@ -68,9 +68,6 @@ function App() {
   const { t } = useTranslation();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -88,8 +85,6 @@ function App() {
   const [isBilibiliDialogOpen, setIsBilibiliDialogOpen] = useState(false);
 
   const isReadOnly = userRole === "viewer";
-
-  const activeTheme = resolvedTheme || theme || "light";
 
   const isUnsupportedStatus = (statusCode: number | undefined) => statusCode === 400 || statusCode === 404 || statusCode === 403
 

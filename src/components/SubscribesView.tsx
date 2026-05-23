@@ -172,7 +172,7 @@ export function SubscribesView({ onRefresh, pinnedRoomId }: SubscribesViewProps)
     }
   }, [rooms, pinnedRoomId])
 
-  const { columnsCount, rows, fixedColumnsStyle, rowVirtualizer } = useGridVirtualizer<RoomInfo>({
+  const { rows, fixedColumnsStyle, rowVirtualizer } = useGridVirtualizer<RoomInfo>({
     scrollContainerRef,
     items: filteredRooms,
     cardMinWidth: CARD_MIN_WIDTH,

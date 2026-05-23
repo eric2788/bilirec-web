@@ -84,11 +84,6 @@ export interface StartRecordRequest {
   durationMinutes?: number
 }
 
-export interface ApiError {
-  message: string
-  code?: string
-}
-
 export interface ConvertQueue {
   provider?: 'ffmpeg' | 'cloudconvert'
   task_id: string
