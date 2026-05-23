@@ -29,8 +29,7 @@ import {
   TranslateIcon,
   GearIcon,
   CheckIcon,
-  UserIcon,
-  CircleHalfTiltIcon
+  UserIcon
 } from "@phosphor-icons/react";
 import { apiClient } from "@/lib/api";
 import {
@@ -68,6 +67,15 @@ function App() {
   const { t } = useTranslation();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const { language, setLanguage } = useLanguage();
+
+  const ThemeTriggerIcon =
+    theme === "dark"
+      ? MoonIcon
+      : theme === "light"
+      ? SunIcon
+      : resolvedTheme === "dark"
+      ? MoonIcon
+      : SunIcon;
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -579,7 +587,7 @@ function App() {
                       className="shrink-0 mr-2 text-card-foreground hover:text-primary rounded-md p-1 hover:bg-secondary/10 dark:hover:bg-secondary/10 hover:scale-[1.02]"
                       aria-label={t("actions.switchTheme")}
                     >
-                      <CircleHalfTiltIcon size={18} />
+                      <ThemeTriggerIcon size={18} />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-44">
